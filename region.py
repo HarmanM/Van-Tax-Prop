@@ -1,8 +1,9 @@
 from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
 
-geolocator = Nominatim(user_agent="specify_your_app_name_here")
+geolocator = Nominatim(user_agent="specify_your_app_name_here", timeout = 3)
 geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+
 
 region_arr = ['Arbutus-Ridge', 'Downtown', 'Dunbar-Southlands', 'Fairview', 'Grandview-Woodland', 'Hastings-Sunrise', 'Kensington-Cedar Cottage',
               'Kerrisdale', 'Killarney', 'Kitsilano', 'Marpole', 'Mount Pleasant', 'Oakridge', 'Renfrew-Collingwood', 'Riley Park', 'Shaughnessy',
@@ -24,4 +25,8 @@ def getRegion(address):
     return ret
 
 print(getRegion('V5V 3S7 4642 WALDEN ST'))
-print(getRegion('V5R 4E2 5817 MCKINNON ST'))
+print(getRegion('V6G 2S3 1477 PENDER ST W'))
+
+
+
+
