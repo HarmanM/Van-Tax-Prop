@@ -2,6 +2,7 @@
 import pandas as pd
 import pandasql as ps
 import math
+import re
 import numpy as np
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import StandardScaler
@@ -9,22 +10,9 @@ import matplotlib.pyplot as plt
 
 propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
 addressDF = pd.read_csv("property-addresses.csv", sep=";")
-subset = propertyDF.head(15000)
-print(subset.to_string())
+censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
+subset = propertyDF.head(5000)
 addr_subset = addressDF.head(5000)
-
-# def addRegionColumn():
-#     region_list = []
-#
-#     for row in subset.itertuples():
-#         postalCode = str(row.PROPERTY_POSTAL_CODE)
-#         civicNumber = str(int(row.TO_CIVIC_NUMBER))
-#         streetNumber = str(row.STREET_NAME)
-#         print(civicNumber + " " + streetNumber)
-#         address = str(civicNumber) + " " + str(streetNumber) + " VANCOUVER BC"
-#         region_list.append(getRegion(address))
-#         print(address)
-#     subset.insert(0, "REGION", region_list, allow_duplicates=True)
 
 def changeCardinal():
     count = 0
@@ -36,13 +24,23 @@ def changeCardinal():
         count = count + 1
     return
 
+def changeDrive():
+    count = 0
+    for row in addr_subset.itertuples():
+        addr = str(row.STD_STREET)
+        if re.search("\s{1}(Drive)", addr):
+            cardinal = addr[0]
+            addr_subset.at[count, 'STD_STREET'] = ''.join(addr[2:] + " " + cardinal)
+        count = count + 1
+    return
+
 def changeCivic():
     count = 0
     for row in subset.itertuples():
         civic_code_to = (row.TO_CIVIC_NUMBER)
         civic_code_from = (row.FROM_CIVIC_NUMBER)
 
-        if civic_code_to is not isinstance(civic_code_to, str) and civic_code_from is not isinstance(civic_code_from, str):
+        if str(civic_code_to).isnumeric() and str(civic_code_from).isnumeric():
             print("Civic To: ", civic_code_to)
             print("Civic From: ", civic_code_from)
             civic_code_to = float(civic_code_to)
@@ -69,24 +67,42 @@ def changeCivic():
         count = count + 1
     return
 
+def addCensus(data):
+    mandarinColumn = []
+    avgIncomeColumn = []
+    for row in data.itertuples():
+        # i have no idea why region is _2
+        #print(row._2)
+
+        # Mother tongue for mandarin is row 730 or id = 712
+        num_mandarin = censusDF.loc['id':712, row._2]
+
+        # Average income is row 1883, id = 1858
+        num_income = censusDF.loc['id':1858, row._2]
+
+
 
 #addRegionColumn()
 #print(addr_subset)
-changeCardinal()
-changeCivic()
-addr_subset.rename(columns={'STD_STREET':'STREET_NAME'}, inplace=True)
+#changeCardinal()
+#changeCivic()
+#addr_subset.rename(columns={'STD_STREET':'STREET_NAME'}, inplace=True)
 #print(addr_subset)
 
 sqlcode = '''
 select *
 from addr_subset
-inner join subset on subset.STREET_NAME=addr_subset.STREET_NAME
-where addr_subset.CIVIC_NUMBER <= subset.TO_CIVIC_NUMBER and addr_subset.CIVIC_NUMBER >= subset.FROM_CIVIC_NUMBER
+inner join subset on subset.LAND_COORDINATE=addr_subset.PCOORD
 '''
 
 newdf = ps.sqldf(sqlcode, locals())
-#print(newdf)
+#print(newdf.to_string())
 
 #print(pd.merge(propertyDF, addr_subset, on='STREET_NAME').to_string())
 
-print(subset.to_string())
+#print(subset.to_string())
+#print(censusDF.to_string())
+
+#addCensus(newdf)
+
+print(censusDF.iloc[1881].to_string())
