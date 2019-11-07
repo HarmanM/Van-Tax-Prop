@@ -10,8 +10,9 @@ import matplotlib.pyplot as plt
 propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
 addressDF = pd.read_csv("property-addresses.csv", sep=";")
 censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
-subset = propertyDF.head(25000)
-addr_subset = addressDF.head(10000)
+subset = propertyDF.head(200000)
+addr_subset = addressDF.head(100000)
+
 
 def addCensus(data):
     mandarinColumn = []
@@ -76,6 +77,46 @@ def filterByYear(df, year):
     df.reset_index(drop=True, inplace=True)
     return
 
+def dropColumns(df):
+    df.drop(['NARRATIVE_LEGAL_LINE1'], inplace=True, axis=1)
+    df.drop(['NARRATIVE_LEGAL_LINE2'], inplace=True, axis=1)
+    df.drop(['NARRATIVE_LEGAL_LINE3'], inplace=True, axis=1)
+    df.drop(['NARRATIVE_LEGAL_LINE4'], inplace=True, axis=1)
+    df.drop(['NARRATIVE_LEGAL_LINE5'], inplace=True, axis=1)
+    df.drop(['BLOCK'], inplace=True, axis=1)
+    df.drop(['DISTRICT_LOT'], inplace=True, axis=1)
+    df.drop(['LOT'], inplace=True, axis=1)
+    df.drop(['FROM_CIVIC_NUMBER'], inplace=True, axis=1)
+    df.drop(['TO_CIVIC_NUMBER'], inplace=True, axis=1)
+    df.drop(['NEIGHBOURHOOD_CODE'], inplace=True, axis=1)
+    df.drop(['PID'], inplace=True, axis=1)
+    df.drop(['FOLIO'], inplace=True, axis=1)
+    df.drop(['ZONE_NAME'], inplace=True, axis=1)
+    df.drop(['PLAN'], inplace=True, axis=1)
+    df.drop(['CIVIC_NUMBER'], inplace=True, axis=1)
+    df.drop(['Geom'], inplace=True, axis=1)
+    df.drop(['P_PARCEL_ID'], inplace=True, axis=1)
+    df.drop(['PCOORD'], inplace=True, axis=1)
+    df.drop(['SITE_ID'], inplace=True, axis=1)
+    df.drop(['LAND_COORDINATE'], inplace=True, axis=1)
+    df.drop(['STD_STREET'], inplace=True, axis=1)
+
+
+def hotEncode(old_data):
+    data_subset = pd.DataFrame()
+    counter = 0
+    for i in old_data:
+        if (old_data[i].dtype == 'object' or len(old_data[i].unique()) < 20):
+            encode = pd.get_dummies(old_data[i])
+            for j in range(len(encode.columns)):
+                encoded_name = encode.columns.values[j]
+                encoded_columns_name = str(i) + "_" + str(encoded_name)
+                data_subset.insert(counter + j, column=encoded_columns_name, value=encode[encoded_name], allow_duplicates=True)
+            counter += len(encode.columns)
+        else:
+            data_subset.insert(counter, column=i, value=old_data[i])
+            counter += 1
+    return data_subset
 
 # addRegionColumn()
 # print(addr_subset)
@@ -99,7 +140,12 @@ newdf = ps.sqldf(sqlcode, locals())
 # print(censusDF.to_string())
 
 addCensus(newdf)
-filterByYear(newdf, 2019)
-
-print(newdf)
+dropColumns(newdf)
+filterByYear(newdf, 2015)
+newdf = pd.get_dummies(newdf, columns = ['ZONE_CATEGORY', 'Geo Local Area', 'LEGAL_TYPE'],
+                             prefix=['ZONE_CATEGORY', 'REGION', 'LEGAL_TYPE'])
+newdf.dropna(axis=0, how='any', inplace=True)
+print(newdf.columns)
 print(newdf.shape)
+
+newdf.to_csv('new_output.csv', index=False)
