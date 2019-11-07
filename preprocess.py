@@ -10,12 +10,16 @@ import matplotlib.pyplot as plt
 propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
 addressDF = pd.read_csv("property-addresses.csv", sep=";")
 censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
-subset = propertyDF.head(200000)
-addr_subset = addressDF.head(100000)
+subset = propertyDF.head(25000)
+addr_subset = addressDF.head(10000)
 
 def addCensus(data):
     mandarinColumn = []
     avgIncomeColumn = []
+    lowIncomeColumn = []
+    bachelorsDegreeColumn = []
+    totalLabourForceColumn = []
+    fullTimeWorkersColumn = []
     for row in data.itertuples():
         # i have no idea why region is _2
         # region also has trailing whitespace for some reason
@@ -29,11 +33,39 @@ def addCensus(data):
             # Average income is row 1883, id = 1858, but need to go back 2? Using row 1881.
             num_income = censusDF.iloc[1881][region]
             avgIncomeColumn.append(num_income)
+
+            # in low income is row 2506
+            low_income = censusDF.iloc[2504][region]
+            lowIncomeColumn.append(low_income)
+
+            # bachelors degree is row 4254
+            bachelors_degree = censusDF.iloc[4252][region]
+            bachelorsDegreeColumn.append(bachelors_degree)
+
+            # total labour force over the age of 15 is row 2233
+            totalLabour_force = censusDF.iloc[2231][region]
+            totalLabourForceColumn.append(totalLabour_force)
+
+            #total people that worked full time in 2015 is row 2204
+            fullTimeWorkers = censusDF.iloc[2202][region]
+            fullTimeWorkersColumn.append(fullTimeWorkers)
+
+
         else:
             mandarinColumn.append(0)
             avgIncomeColumn.append(0)
+            lowIncomeColumn.append(0)
+            bachelorsDegreeColumn.append(0)
+            totalLabourForceColumn.append(0)
+            fullTimeWorkersColumn.append(0)
+
     data['native-mandarin'] = mandarinColumn
     data['avg-income'] = avgIncomeColumn
+    data['low-income'] = lowIncomeColumn
+    data['bachelors-degree'] = bachelorsDegreeColumn
+    data['total-labour-force'] = totalLabourForceColumn
+    data['full-time-workers'] = fullTimeWorkersColumn
+
     return
 
 # pass in the dataframe and the year that you want to filter by
@@ -67,7 +99,7 @@ newdf = ps.sqldf(sqlcode, locals())
 # print(censusDF.to_string())
 
 addCensus(newdf)
-filterByYear(newdf, 2015)
+filterByYear(newdf, 2019)
 
-print(newdf.to_string())
+print(newdf)
 print(newdf.shape)
