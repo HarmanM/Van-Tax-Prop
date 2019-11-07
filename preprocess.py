@@ -93,9 +93,10 @@ def addCensus(data):
     data['avg-income'] = avgIncomeColumn
     return
 
-
+# replace the 'filterYear' variable by the year that you want results for (ie; 2016 will retrieve only results from 2016)
 def filter2016(df):
-    df.drop(df.loc[df['REPORT_YEAR'] != 2019].index, inplace=True)
+    filterYear = 2019
+    df.drop(df.loc[df['REPORT_YEAR'] != filterYear].index, inplace=True)
     df.drop(df.loc[df['Geo Local Area'] == 0].index, inplace=True)
     df.reset_index(drop=True, inplace=True)
     return
