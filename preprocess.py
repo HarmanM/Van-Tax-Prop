@@ -1,4 +1,3 @@
-
 import pandas as pd
 import pandasql as ps
 import math
@@ -11,8 +10,9 @@ import matplotlib.pyplot as plt
 propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
 addressDF = pd.read_csv("property-addresses.csv", sep=";")
 censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
-subset = propertyDF.head(15000)
-addr_subset = addressDF.head(1000)
+subset = propertyDF.head(10000)
+addr_subset = addressDF.head(10000)
+
 
 def changeCardinal():
     count = 0
@@ -24,6 +24,7 @@ def changeCardinal():
         count = count + 1
     return
 
+
 def changeDrive():
     count = 0
     for row in addr_subset.itertuples():
@@ -33,6 +34,7 @@ def changeDrive():
             addr_subset.at[count, 'STD_STREET'] = ''.join(addr[2:] + " " + cardinal)
         count = count + 1
     return
+
 
 def changeCivic():
     count = 0
@@ -67,33 +69,44 @@ def changeCivic():
         count = count + 1
     return
 
+
 def addCensus(data):
     mandarinColumn = []
     avgIncomeColumn = []
     for row in data.itertuples():
         # i have no idea why region is _2
         # region also has trailing whitespace for some reason
-        region = row._2 + ' '
+        if row._2 is not None:
+            region = row._2 + ' '
 
-        # Mother tongue for mandarin is row 730 or id = 712
-        num_mandarin = censusDF.iloc[728][region]
-        mandarinColumn.append(num_mandarin)
+            # Mother tongue for mandarin is row 730 or id = 712
+            num_mandarin = censusDF.iloc[728][region]
+            mandarinColumn.append(num_mandarin)
 
-        # Average income is row 1883, id = 1858, but need to go back 2? Using row 1881.
-        num_income = censusDF.iloc[1881][region]
-        avgIncomeColumn.append(num_income)
+            # Average income is row 1883, id = 1858, but need to go back 2? Using row 1881.
+            num_income = censusDF.iloc[1881][region]
+            avgIncomeColumn.append(num_income)
+        else:
+            mandarinColumn.append(0)
+            avgIncomeColumn.append(0)
     data['native-mandarin'] = mandarinColumn
     data['avg-income'] = avgIncomeColumn
     return
 
 
+def filter2016(df):
+    df.drop(df.loc[df['REPORT_YEAR'] != 2019].index, inplace=True)
+    df.drop(df.loc[df['Geo Local Area'] == 0].index, inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    return
 
-#addRegionColumn()
-#print(addr_subset)
-#changeCardinal()
-#changeCivic()
-#addr_subset.rename(columns={'STD_STREET':'STREET_NAME'}, inplace=True)
-#print(addr_subset)
+
+# addRegionColumn()
+# print(addr_subset)
+# changeCardinal()
+# changeCivic()
+# addr_subset.rename(columns={'STD_STREET':'STREET_NAME'}, inplace=True)
+# print(addr_subset)
 
 sqlcode = '''
 select *
@@ -102,12 +115,13 @@ inner join subset on subset.LAND_COORDINATE=addr_subset.PCOORD
 '''
 
 newdf = ps.sqldf(sqlcode, locals())
-#print(newdf.to_string())
+# print(newdf.to_string())
 
-#print(pd.merge(propertyDF, addr_subset, on='STREET_NAME').to_string())
+# print(pd.merge(propertyDF, addr_subset, on='STREET_NAME').to_string())
 
-#print(subset.to_string())
-#print(censusDF.to_string())
+# print(subset.to_string())
+# print(censusDF.to_string())
 
 addCensus(newdf)
+filter2016(newdf)
 print(newdf.to_string())
