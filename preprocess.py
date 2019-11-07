@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
 addressDF = pd.read_csv("property-addresses.csv", sep=";")
 censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
-subset = propertyDF.head(5000)
-addr_subset = addressDF.head(5000)
+subset = propertyDF.head(15000)
+addr_subset = addressDF.head(1000)
 
 def changeCardinal():
     count = 0
@@ -72,13 +72,19 @@ def addCensus(data):
     avgIncomeColumn = []
     for row in data.itertuples():
         # i have no idea why region is _2
-        #print(row._2)
+        # region also has trailing whitespace for some reason
+        region = row._2 + ' '
 
         # Mother tongue for mandarin is row 730 or id = 712
-        num_mandarin = censusDF.loc['id':712, row._2]
+        num_mandarin = censusDF.iloc[728][region]
+        mandarinColumn.append(num_mandarin)
 
-        # Average income is row 1883, id = 1858
-        num_income = censusDF.loc['id':1858, row._2]
+        # Average income is row 1883, id = 1858, but need to go back 2? Using row 1881.
+        num_income = censusDF.iloc[1881][region]
+        avgIncomeColumn.append(num_income)
+    data['native-mandarin'] = mandarinColumn
+    data['avg-income'] = avgIncomeColumn
+    return
 
 
 
@@ -103,6 +109,5 @@ newdf = ps.sqldf(sqlcode, locals())
 #print(subset.to_string())
 #print(censusDF.to_string())
 
-#addCensus(newdf)
-
-print(censusDF.iloc[1881].to_string())
+addCensus(newdf)
+print(newdf.to_string())
