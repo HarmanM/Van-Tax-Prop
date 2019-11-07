@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
 addressDF = pd.read_csv("property-addresses.csv", sep=";")
 censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
-subset = propertyDF.head(10000)
-addr_subset = addressDF.head(10000)
+subset = propertyDF.head(250000)
+addr_subset = addressDF.head(100000)
 
 
 def changeCardinal():
@@ -49,7 +49,7 @@ def changeCivic():
             civic_code_from = float(civic_code_from)
 
             if (math.isnan(civic_code_to)):
-                print("WENT IN ONEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE", civic_code_from)
+                print("went in one", civic_code_from)
                 civic_code_to = civic_code_from
                 subset.at[count, 'TO_CIVIC_NUMBER'] = civic_code_to
 
@@ -93,9 +93,9 @@ def addCensus(data):
     data['avg-income'] = avgIncomeColumn
     return
 
-# replace the 'filterYear' variable by the year that you want results for (ie; 2016 will retrieve only results from 2016)
-def filter2016(df):
-    filterYear = 2019
+# pass in the dataframe and the year that you want to filter by
+def filterByYear(df, year):
+    filterYear = year
     df.drop(df.loc[df['REPORT_YEAR'] != filterYear].index, inplace=True)
     df.drop(df.loc[df['Geo Local Area'] == 0].index, inplace=True)
     df.reset_index(drop=True, inplace=True)
@@ -124,5 +124,6 @@ newdf = ps.sqldf(sqlcode, locals())
 # print(censusDF.to_string())
 
 addCensus(newdf)
-filter2016(newdf)
+filterByYear(newdf, 2015)
 print(newdf.to_string())
+print(newdf.shape)
