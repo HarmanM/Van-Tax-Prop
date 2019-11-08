@@ -11,37 +11,33 @@ propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
 addressDF = pd.read_csv("property-addresses.csv", sep=";")
 censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
 propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
-subset = propertyDF.head(200000)
+subset = propertyDF.sample(200000)
 addr_subset = addressDF.head(100000)
 prop2011subset = propertyDF2011.head(500000)
 
 
-def mergePropTax(prop2011subset):
+def mergePropTax(prop2016subset, prop2011subset):
     # defining the columns we will be keeping in the 2006-2013 property tax dataset
-    cols_to_keep = ['PID', 'CURRENT_LAND_VALUE', 'CURRENT_IMPROVEMENT_VALUE', 'PREVIOUS_LAND_VALUE','PREVIOUS_IMPROVEMENT_VALUE', 'REPORT_YEAR' ]
+    cols_to_keep = ['PID', 'CURRENT_LAND_VALUE', 'CURRENT_IMPROVEMENT_VALUE', 'REPORT_YEAR' ]
     prop2011subset = prop2011subset[cols_to_keep]
 
     # dropping all columns where the years are not 2011 and 2016, respectively, in both property tax datasets
-    prop2011subset.drop(prop2011subset.loc[prop2011subset['REPORT_YEAR'] != 2011].index, inplace=True)
-    subset.drop(subset.loc[subset['REPORT_YEAR'] != 2016].index, inplace=True)
-
+    temp_2011 = prop2011subset.drop(prop2011subset.loc[prop2011subset['REPORT_YEAR'] != 2011].index, inplace=False)
+    temp_2016 = prop2016subset.drop(prop2016subset.loc[prop2016subset['REPORT_YEAR'] != 2016].index, inplace=False)
     # merging the two datasets on PID
-    mergedPropertyDF = prop2011subset.merge(subset, on='PID', how='inner')
+    mergedPropertyDF = temp_2011.merge(temp_2016, on='PID', how='inner')
+    mergedPropertyDF.dropna(axis=0, subset=['PID'], inplace=False)
+
 
     # getting the delta values by subtracting the two datasets (Note: the 2006-2013 property tax report dataset does not have any previous land value
     # or previous improvement value entries
     mergedPropertyDF['CURRENT_LAND_VALUE'] = mergedPropertyDF['CURRENT_LAND_VALUE_y'] - mergedPropertyDF['CURRENT_LAND_VALUE_x']
     mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE'] = mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_y'] - mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_x']
-    mergedPropertyDF['PREVIOUS_LAND_VALUE'] = mergedPropertyDF['PREVIOUS_LAND_VALUE_y'] - mergedPropertyDF['PREVIOUS_LAND_VALUE_x']
-    mergedPropertyDF['PREVIOUS_IMPROVEMENT_VALUE'] = mergedPropertyDF['PREVIOUS_IMPROVEMENT_VALUE_y'] - mergedPropertyDF['PREVIOUS_IMPROVEMENT_VALUE_x']
-
-    # mergedPropertyDF = mergedPropertyDF['PID', 'CURRENT_LAND_VALUE', 'CURRENT_IMPROVEMENT_VALUE', 'PREVIOUS_LAND_VALUE','PREVIOUS_IMPROVEMENT_VALUE', 'REPORT_YEAR']
+    mergedPropertyDF.reset_index(inplace=True, drop=True)
+    return mergedPropertyDF
 
 
-
-# mergePropTax(prop2011subset)
-
-
+#mergePropTax(subset, prop2011subset)
 def addCensus(data):
     mandarinColumn = []
     avgIncomeColumn = []
@@ -117,7 +113,7 @@ def dropColumns(df):
     df.drop(['FROM_CIVIC_NUMBER'], inplace=True, axis=1)
     df.drop(['TO_CIVIC_NUMBER'], inplace=True, axis=1)
     df.drop(['NEIGHBOURHOOD_CODE'], inplace=True, axis=1)
-    df.drop(['PID'], inplace=True, axis=1)
+    # df.drop(['PID'], inplace=True, axis=1)
     df.drop(['FOLIO'], inplace=True, axis=1)
     df.drop(['ZONE_NAME'], inplace=True, axis=1)
     df.drop(['PLAN'], inplace=True, axis=1)
@@ -165,24 +161,25 @@ def mergePropTax2006_2011(prop2011subset):
     print(mergedPropertyDF.shape)
     return mergedPropertyDF
 
+merged_2006_2011 = mergePropTax2006_2011(prop2011subset)
+merged_2011_2016 = mergePropTax(subset, prop2011subset)
 
-
-
-# print(addr_subset)
-# addr_subset.rename(columns={'STD_STREET':'STREET_NAME'}, inplace=True)
-# print(addr_subset)
+sqlcode2 = '''
+select *
+from addr_subset
+inner join merged_2006_2011 on merged_2006_2011.LAND_COORDINATE=addr_subset.PCOORD
+'''
+newdf2 = ps.sqldf(sqlcode2, locals())
 
 sqlcode = '''
 select *
 from addr_subset
-inner join mergedPropSubset on mergedPropSubset.LAND_COORDINATE=addr_subset.PCOORD
+inner join merged_2011_2016 on merged_2011_2016.LAND_COORDINATE=addr_subset.PCOORD
 '''
-mergedPropSubset = mergePropTax2006_2011(prop2011subset)
-#print(mergedPropSubset.head(10).to_string())
-
+print(newdf2.head(100).to_string())
 newdf = ps.sqldf(sqlcode, locals())
 print(newdf.head(100).to_string())
-
+# print(merged_2011_2016.head(500).to_string())
 # print(pd.merge(propertyDF, addr_subset, on='STREET_NAME').to_string())
 
 # print(subset.to_string())
@@ -193,8 +190,8 @@ dropColumns(newdf)
 newdf = pd.get_dummies(newdf, columns = ['ZONE_CATEGORY', 'Geo Local Area', 'LEGAL_TYPE'],
                              prefix=['ZONE_CATEGORY', 'REGION', 'LEGAL_TYPE'])
 # newdf.dropna(axis=0, how='any', inplace=True)
-print(newdf.columns)
-print(newdf.shape)
-print(newdf.head(100).to_string())
+# print(newdf.columns)
+# print(newdf.shape)
+# print(newdf.head(100).to_string())
 
 # newdf.to_csv('new_output.csv', index=False)
