@@ -10,30 +10,10 @@ import matplotlib.pyplot as plt
 propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
 addressDF = pd.read_csv("property-addresses.csv", sep=";")
 censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
+propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
 subset = propertyDF.head(200000)
 addr_subset = addressDF.head(100000)
-
-
-def mergePropTax2006_2011(prop2011subset):
-    # Making two subsets, one for data from 2006 and one for data from 2011
-    subset_2011 = prop2011subset.drop(prop2011subset.loc[~prop2011subset['REPORT_YEAR'].isin([2011])].index, inplace=False)
-    subset_2006 = prop2011subset.drop(prop2011subset.loc[~prop2011subset['REPORT_YEAR'].isin([2006])].index, inplace=False)
-
-    # only keeping the columns we care about comparing between the years
-    cols_to_keep = ['PID', 'CURRENT_LAND_VALUE', 'CURRENT_IMPROVEMENT_VALUE', 'REPORT_YEAR']
-    subset_2006 = subset_2006[cols_to_keep]
-
-    # merging the two datasets on PID
-    mergedPropertyDF = subset_2006.merge(subset_2011, on='PID', how='inner')
-
-    # getting the delta values by subtracting the two datasets
-    mergedPropertyDF['CURRENT_LAND_VALUE'] = mergedPropertyDF['CURRENT_LAND_VALUE_y'] - mergedPropertyDF['CURRENT_LAND_VALUE_x']
-    mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE'] = mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_y'] - mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_x']
-
-    print(mergedPropertyDF.shape)
-
-
-mergePropTax2006_2011(prop2011subset)
+prop2011subset = propertyDF2011.head(500000)
 
 
 def mergePropTax(prop2011subset):
@@ -56,9 +36,8 @@ def mergePropTax(prop2011subset):
     mergedPropertyDF['PREVIOUS_IMPROVEMENT_VALUE'] = mergedPropertyDF['PREVIOUS_IMPROVEMENT_VALUE_y'] - mergedPropertyDF['PREVIOUS_IMPROVEMENT_VALUE_x']
 
     # mergedPropertyDF = mergedPropertyDF['PID', 'CURRENT_LAND_VALUE', 'CURRENT_IMPROVEMENT_VALUE', 'PREVIOUS_LAND_VALUE','PREVIOUS_IMPROVEMENT_VALUE', 'REPORT_YEAR']
-    print(mergedPropertyDF.columns.values)
 
-    print(mergedPropertyDF.head(10).to_string())
+
 
 # mergePropTax(prop2011subset)
 
@@ -167,34 +146,55 @@ def hotEncode(old_data):
             counter += 1
     return data_subset
 
-# addRegionColumn()
+def mergePropTax2006_2011(prop2011subset):
+    # Making two subsets, one for data from 2006 and one for data from 2011
+    subset_2011 = prop2011subset.drop(prop2011subset.loc[~prop2011subset['REPORT_YEAR'].isin([2011])].index, inplace=False)
+    subset_2006 = prop2011subset.drop(prop2011subset.loc[~prop2011subset['REPORT_YEAR'].isin([2006])].index, inplace=False)
+
+    # only keeping the columns we care about comparing between the years
+    cols_to_keep = ['PID', 'CURRENT_LAND_VALUE', 'CURRENT_IMPROVEMENT_VALUE', 'REPORT_YEAR']
+    subset_2006 = subset_2006[cols_to_keep]
+
+    # merging the two datasets on PID
+    mergedPropertyDF = subset_2006.merge(subset_2011, on='PID', how='inner')
+
+    # getting the delta values by subtracting the two datasets
+    mergedPropertyDF['CURRENT_LAND_VALUE'] = mergedPropertyDF['CURRENT_LAND_VALUE_y'] - mergedPropertyDF['CURRENT_LAND_VALUE_x']
+    mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE'] = mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_y'] - mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_x']
+
+    print(mergedPropertyDF.shape)
+    return mergedPropertyDF
+
+
+
+
 # print(addr_subset)
-# changeCardinal()
-# changeCivic()
 # addr_subset.rename(columns={'STD_STREET':'STREET_NAME'}, inplace=True)
 # print(addr_subset)
 
 sqlcode = '''
 select *
 from addr_subset
-inner join subset on subset.LAND_COORDINATE=addr_subset.PCOORD
+inner join mergedPropSubset on mergedPropSubset.LAND_COORDINATE=addr_subset.PCOORD
 '''
+mergedPropSubset = mergePropTax2006_2011(prop2011subset)
+#print(mergedPropSubset.head(10).to_string())
 
 newdf = ps.sqldf(sqlcode, locals())
-# print(newdf.to_string())
+print(newdf.head(100).to_string())
 
 # print(pd.merge(propertyDF, addr_subset, on='STREET_NAME').to_string())
 
 # print(subset.to_string())
 # print(censusDF.to_string())
 
-addCensus(newdf)
+# addCensus(newdf)
 dropColumns(newdf)
-filterByYear(newdf, 2015)
 newdf = pd.get_dummies(newdf, columns = ['ZONE_CATEGORY', 'Geo Local Area', 'LEGAL_TYPE'],
                              prefix=['ZONE_CATEGORY', 'REGION', 'LEGAL_TYPE'])
-newdf.dropna(axis=0, how='any', inplace=True)
+# newdf.dropna(axis=0, how='any', inplace=True)
 print(newdf.columns)
 print(newdf.shape)
+print(newdf.head(100).to_string())
 
-newdf.to_csv('new_output.csv', index=False)
+# newdf.to_csv('new_output.csv', index=False)
