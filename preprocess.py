@@ -14,6 +14,55 @@ subset = propertyDF.head(200000)
 addr_subset = addressDF.head(100000)
 
 
+def mergePropTax2006_2011(prop2011subset):
+    # Making two subsets, one for data from 2006 and one for data from 2011
+    subset_2011 = prop2011subset.drop(prop2011subset.loc[~prop2011subset['REPORT_YEAR'].isin([2011])].index, inplace=False)
+    subset_2006 = prop2011subset.drop(prop2011subset.loc[~prop2011subset['REPORT_YEAR'].isin([2006])].index, inplace=False)
+
+    # only keeping the columns we care about comparing between the years
+    cols_to_keep = ['PID', 'CURRENT_LAND_VALUE', 'CURRENT_IMPROVEMENT_VALUE', 'REPORT_YEAR']
+    subset_2006 = subset_2006[cols_to_keep]
+
+    # merging the two datasets on PID
+    mergedPropertyDF = subset_2006.merge(subset_2011, on='PID', how='inner')
+
+    # getting the delta values by subtracting the two datasets
+    mergedPropertyDF['CURRENT_LAND_VALUE'] = mergedPropertyDF['CURRENT_LAND_VALUE_y'] - mergedPropertyDF['CURRENT_LAND_VALUE_x']
+    mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE'] = mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_y'] - mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_x']
+
+    print(mergedPropertyDF.shape)
+
+
+mergePropTax2006_2011(prop2011subset)
+
+
+def mergePropTax(prop2011subset):
+    # defining the columns we will be keeping in the 2006-2013 property tax dataset
+    cols_to_keep = ['PID', 'CURRENT_LAND_VALUE', 'CURRENT_IMPROVEMENT_VALUE', 'PREVIOUS_LAND_VALUE','PREVIOUS_IMPROVEMENT_VALUE', 'REPORT_YEAR' ]
+    prop2011subset = prop2011subset[cols_to_keep]
+
+    # dropping all columns where the years are not 2011 and 2016, respectively, in both property tax datasets
+    prop2011subset.drop(prop2011subset.loc[prop2011subset['REPORT_YEAR'] != 2011].index, inplace=True)
+    subset.drop(subset.loc[subset['REPORT_YEAR'] != 2016].index, inplace=True)
+
+    # merging the two datasets on PID
+    mergedPropertyDF = prop2011subset.merge(subset, on='PID', how='inner')
+
+    # getting the delta values by subtracting the two datasets (Note: the 2006-2013 property tax report dataset does not have any previous land value
+    # or previous improvement value entries
+    mergedPropertyDF['CURRENT_LAND_VALUE'] = mergedPropertyDF['CURRENT_LAND_VALUE_y'] - mergedPropertyDF['CURRENT_LAND_VALUE_x']
+    mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE'] = mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_y'] - mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_x']
+    mergedPropertyDF['PREVIOUS_LAND_VALUE'] = mergedPropertyDF['PREVIOUS_LAND_VALUE_y'] - mergedPropertyDF['PREVIOUS_LAND_VALUE_x']
+    mergedPropertyDF['PREVIOUS_IMPROVEMENT_VALUE'] = mergedPropertyDF['PREVIOUS_IMPROVEMENT_VALUE_y'] - mergedPropertyDF['PREVIOUS_IMPROVEMENT_VALUE_x']
+
+    # mergedPropertyDF = mergedPropertyDF['PID', 'CURRENT_LAND_VALUE', 'CURRENT_IMPROVEMENT_VALUE', 'PREVIOUS_LAND_VALUE','PREVIOUS_IMPROVEMENT_VALUE', 'REPORT_YEAR']
+    print(mergedPropertyDF.columns.values)
+
+    print(mergedPropertyDF.head(10).to_string())
+
+# mergePropTax(prop2011subset)
+
+
 def addCensus(data):
     mandarinColumn = []
     avgIncomeColumn = []
