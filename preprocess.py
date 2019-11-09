@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 # addressDF = pd.read_csv("property-addresses.csv", sep=";")
 # censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
 # propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
-census2006 = pd.read_csv("CensusLocalAreaProfiles2006.csv", encoding="ISO-8859-1")
-census2011 = pd.read_csv("CensusLocalAreaProfiles2011.csv", encoding="ISO-8859-1")
+# census2006 = pd.read_csv("CensusLocalAreaProfiles2006.csv", encoding="ISO-8859-1")
+# census2011 = pd.read_csv("CensusLocalAreaProfiles2011.csv", encoding="ISO-8859-1")
 # subset = propertyDF.sample(200000)
 # addr_subset = addressDF.head(100000)
 # prop2011subset = propertyDF2011.head(500000)
@@ -179,14 +179,38 @@ def deltaCensus2006_2011(census2006, census2011):
     #married 
     married2006 = (census2006.iloc[76,1:].str.replace(',','').to_frame().T).astype(int)
     married2011 = (census2011.iloc[80, 1:].str.replace(',','').to_frame().T).astype(int)
-
     deltaCensus.loc['deltaMarried'] = married2011.iloc[0] - married2006.iloc[0]
 
-    print(deltaCensus)
-    # joinDF.to_csv(r'C:\Users\David\Desktop\ML\Van-Tax-Prop\test.csv')
+    #commonlaw
+    common2006 = (census2006.iloc[82,1:].str.replace(',','').to_frame().T).astype(int) 
+    common2011 = (census2011.iloc[81, 1:].str.replace(',','').to_frame().T).astype(int) 
+    deltaCensus.loc['deltaCommonLaw'] = common2011.iloc[0] - common2006.iloc[0]
+
+    #single
+    single2006 = (census2006.iloc[75,1:].str.replace(',','').to_frame().T).astype(int)
+    single2011 = (census2011.iloc[83, 1:].str.replace(',','').to_frame().T).astype(int)
+    deltaCensus.loc['deltaSingle'] = single2011.iloc[0] - single2006.iloc[0]
+
+    #english
+    english2006 = (census2006.iloc[85,1:].str.replace(',','').to_frame().T).astype(int)
+    english2011 = (census2011.iloc[215, 1:].str.replace(',','').to_frame().T).astype(int)
+    deltaCensus.loc['deltaEnglish'] = english2011.iloc[0] - english2006.iloc[0]
+
+    #mandarin
+    mandarin2006 = (census2006.iloc[168,1:].str.replace(',','').to_frame().T).astype(int)
+    mandarin2011 = (census2011.iloc[276, 1:].str.replace(',','').to_frame().T).astype(int)
+    deltaCensus.loc['deltaMandarin'] = mandarin2011.iloc[0] - mandarin2006.iloc[0]
+
+    #cantonese
+    cantonese2006 = (census2006.iloc[166,1:].str.replace(',','').to_frame().T).astype(int)
+    cantonese2011 = (census2011.iloc[243, 1:].str.replace(',','').to_frame().T).astype(int)
+    deltaCensus.loc['deltaCantonese'] = cantonese2011.iloc[0] - cantonese2006.iloc[0]   
+
+    deltaCensus = deltaCensus.iloc[2:]
+    deltaCensus.to_csv(r'')
     pass
 
-deltaCensus2006_2011(census2006, census2011)
+# deltaCensus2006_2011(census2006, census2011)
 
 # merged_2006_2011 = mergePropTax2006_2011(prop2011subset)
 # merged_2011_2016 = mergePropTax(subset, prop2011subset)
