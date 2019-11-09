@@ -7,13 +7,15 @@ from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
-propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
-addressDF = pd.read_csv("property-addresses.csv", sep=";")
-censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
-propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
-subset = propertyDF.sample(200000)
-addr_subset = addressDF.head(100000)
-prop2011subset = propertyDF2011.head(500000)
+# propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
+# addressDF = pd.read_csv("property-addresses.csv", sep=";")
+# censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
+# propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
+census2006 = pd.read_csv("CensusLocalAreaProfiles2006.csv", encoding="ISO-8859-1")
+census2011 = pd.read_csv("CensusLocalAreaProfiles2011.csv", encoding="ISO-8859-1")
+# subset = propertyDF.sample(200000)
+# addr_subset = addressDF.head(100000)
+# prop2011subset = propertyDF2011.head(500000)
 
 
 def mergePropTax(prop2016subset, prop2011subset):
@@ -161,37 +163,43 @@ def mergePropTax2006_2011(prop2011subset):
     print(mergedPropertyDF.shape)
     return mergedPropertyDF
 
-merged_2006_2011 = mergePropTax2006_2011(prop2011subset)
-merged_2011_2016 = mergePropTax(subset, prop2011subset)
+def deltaCensus2006_2011(census2006, census2011):
+    census2011.drop(['Vancouver CSD (City)'], inplace=True, axis=1)
+    census2011.drop(['CMA of Vancouver'], inplace=True, axis=1)
+    census2006.drop(['Vancouver CSD (City of Vancouver)'], inplace=True, axis=1)
+    census2006.drop(['Vancouver CMA  (Metro Vancouver)'], inplace=True, axis=1)
 
-sqlcode2 = '''
-select *
-from addr_subset
-inner join merged_2006_2011 on merged_2006_2011.LAND_COORDINATE=addr_subset.PCOORD
-'''
-newdf2 = ps.sqldf(sqlcode2, locals())
+    #population
+    row2006 = (census2006.iloc[1,1:].to_frame().T)
+    row2011 = (census2011.iloc[0, 1:].to_frame().T)
 
-sqlcode = '''
-select *
-from addr_subset
-inner join merged_2011_2016 on merged_2011_2016.LAND_COORDINATE=addr_subset.PCOORD
-'''
-print(newdf2.head(100).to_string())
-newdf = ps.sqldf(sqlcode, locals())
-print(newdf.head(100).to_string())
-# print(merged_2011_2016.head(500).to_string())
-# print(pd.merge(propertyDF, addr_subset, on='STREET_NAME').to_string())
+    combine = row2011.combine_first(row2006)
+    test = np.array(row2006)
 
-# print(subset.to_string())
-# print(censusDF.to_string())
+    # joinDF.to_csv(r'C:\Users\David\Desktop\ML\Van-Tax-Prop\test.csv')
+    pass
+
+deltaCensus2006_2011(census2006, census2011)
+
+# merged_2006_2011 = mergePropTax2006_2011(prop2011subset)
+# merged_2011_2016 = mergePropTax(subset, prop2011subset)
+
+# sqlcode2 = '''
+# select *
+# from addr_subset
+# inner join merged_2006_2011 on merged_2006_2011.LAND_COORDINATE=addr_subset.PCOORD
+# '''
+# newdf2 = ps.sqldf(sqlcode2, locals())
+
+# sqlcode = '''
+# select *
+# from addr_subset
+# inner join merged_2011_2016 on merged_2011_2016.LAND_COORDINATE=addr_subset.PCOORD
+# '''
+# newdf = ps.sqldf(sqlcode, locals())
+
 
 # addCensus(newdf)
-dropColumns(newdf)
-newdf = pd.get_dummies(newdf, columns = ['ZONE_CATEGORY', 'Geo Local Area', 'LEGAL_TYPE'],
-                             prefix=['ZONE_CATEGORY', 'REGION', 'LEGAL_TYPE'])
-# newdf.dropna(axis=0, how='any', inplace=True)
-# print(newdf.columns)
-# print(newdf.shape)
-# print(newdf.head(100).to_string())
-
-# newdf.to_csv('new_output.csv', index=False)
+# dropColumns(newdf)
+# newdf = pd.get_dummies(newdf, columns = ['ZONE_CATEGORY', 'Geo Local Area', 'LEGAL_TYPE'],
+#                              prefix=['ZONE_CATEGORY', 'REGION', 'LEGAL_TYPE'])
