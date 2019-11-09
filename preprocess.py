@@ -7,14 +7,14 @@ from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
-# propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
-# addressDF = pd.read_csv("property-addresses.csv", sep=";")
+propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
+addressDF = pd.read_csv("property-addresses.csv", sep=";")
 censusDF = pd.read_csv("deltaCensus.csv")
 propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
-# census2006 = pd.read_csv("CensusLocalAreaProfiles2006.csv", encoding="ISO-8859-1")
-# census2011 = pd.read_csv("CensusLocalAreaProfiles2011.csv", encoding="ISO-8859-1")
-# subset = propertyDF.sample(200000)
-# addr_subset = addressDF.head(100000)
+census2006 = pd.read_csv("CensusLocalAreaProfiles2006.csv", encoding="ISO-8859-1")
+census2011 = pd.read_csv("CensusLocalAreaProfiles2011.csv", encoding="ISO-8859-1")
+subset = propertyDF.sample(200000)
+addr_subset = addressDF
 prop2011subset = propertyDF2011.head(500000)
 
 
@@ -51,34 +51,34 @@ def addCensus(data, census):
     for row in data.itertuples():
         # i have no idea why region is _2
         # region also has trailing whitespace for some reason
+
         if row._2 is not None:
             region = row._2
-
             # Mother tongue for mandarin is row 730 or id = 712
-            num_mandarin = census.loc['deltaCantonese', region]
+            num_mandarin = census.iloc[5][region]
             delta_mandarin_column.append(num_mandarin)
 
             # Average income is row 1883, id = 1858, but need to go back 2? Using row 1881.
-            num_married = census.loc['deltaMarried', region]
+            num_married = census.iloc[1][region]
             delta_marriage_column.append(num_married)
 
             # in low income is row 2506
-            num_common = census.loc['deltaCommonLaw', region]
+            num_common = census.loc[2][region]
             delta_commonlaw_column.append(num_common)
 
             # bachelors degree is row 4254
-            num_single = census.loc['deltaSingle', region]
+            num_single = census.loc[3][region]
             delta_single_column.append(num_single)
 
             # total labour force over the age of 15 is row 2233
-            num_english = census.loc['deltaEnglish', region]
+            num_english = census.loc[4][region]
             delta_english_column.append(num_english)
 
             #total people that worked full time in 2015 is row 2204
-            num_canto = census.loc['deltaCantonese', region]
+            num_canto = census.loc[6][region]
             delta_cantonese_column.append(num_canto)
 
-            num_pop = census.loc['deltaPopulation', region]
+            num_pop = census.loc[0][region]
             delta_pop_column.append(num_pop)
 
         else:
@@ -212,7 +212,10 @@ def deltaCensus2006_2011(census2006, census2011):
     deltaCensus.loc['deltaCantonese'] = cantonese2011.iloc[0] - cantonese2006.iloc[0]   
 
     deltaCensus = deltaCensus.iloc[2:]
-    deltaCensus.to_csv(r'')
+    print(deltaCensus)
+    print(deltaCensus['delta-cantonese', region])
+
+    # deltaCensus.to_csv(r'')
     pass
 
 # deltaCensus2006_2011(census2006, census2011)
@@ -236,9 +239,10 @@ merged_06_11_frame = ps.sqldf(sqlcode2, locals())
 
 
 addCensus(merged_06_11_frame, censusDF)
+print(merged_06_11_frame.head(100).to_string())
 # Drop any unnecessary columns
 dropColumns(merged_06_11_frame)
 newdf = pd.get_dummies(merged_06_11_frame, columns = ['ZONE_CATEGORY', 'Geo Local Area', 'LEGAL_TYPE'],
                               prefix=['ZONE_CATEGORY', 'REGION', 'LEGAL_TYPE'])
-
-newdf.to_csv('preprocessed_data.csv')
+newdf.to_csv('preprocessed_complete_2006_2011.csv')
+# newdf.to_csv('preprocessed_data.csv')
