@@ -170,12 +170,19 @@ def deltaCensus2006_2011(census2006, census2011):
     census2006.drop(['Vancouver CMA  (Metro Vancouver)'], inplace=True, axis=1)
 
     #population
-    row2006 = (census2006.iloc[1,1:].to_frame().T)
-    row2011 = (census2011.iloc[0, 1:].to_frame().T)
+    population2006 = (census2006.iloc[1,1:].str.replace(',','').to_frame().T).astype(int)
+    population2011 = (census2011.iloc[0, 1:].str.replace(',','').to_frame().T).astype(int)
 
-    combine = row2011.combine_first(row2006)
-    test = np.array(row2006)
+    deltaCensus = population2011.combine_first(population2006)
+    deltaCensus.loc['deltaPopulation'] = deltaCensus.iloc[0] - deltaCensus.iloc[1]
+    
+    #married 
+    married2006 = (census2006.iloc[76,1:].str.replace(',','').to_frame().T).astype(int)
+    married2011 = (census2011.iloc[80, 1:].str.replace(',','').to_frame().T).astype(int)
 
+    deltaCensus.loc['deltaMarried'] = married2011.iloc[0] - married2006.iloc[0]
+
+    print(deltaCensus)
     # joinDF.to_csv(r'C:\Users\David\Desktop\ML\Van-Tax-Prop\test.csv')
     pass
 
