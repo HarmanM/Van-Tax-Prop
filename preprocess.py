@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 
 # propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
 # addressDF = pd.read_csv("property-addresses.csv", sep=";")
-# censusDF = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
-# propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
+censusDF = pd.read_csv("deltaCensus.csv")
+propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
 # census2006 = pd.read_csv("CensusLocalAreaProfiles2006.csv", encoding="ISO-8859-1")
 # census2011 = pd.read_csv("CensusLocalAreaProfiles2011.csv", encoding="ISO-8859-1")
 # subset = propertyDF.sample(200000)
 # addr_subset = addressDF.head(100000)
-# prop2011subset = propertyDF2011.head(500000)
+prop2011subset = propertyDF2011.head(500000)
 
 
 def mergePropTax(prop2016subset, prop2011subset):
@@ -40,58 +40,63 @@ def mergePropTax(prop2016subset, prop2011subset):
 
 
 #mergePropTax(subset, prop2011subset)
-def addCensus(data):
-    mandarinColumn = []
-    avgIncomeColumn = []
-    lowIncomeColumn = []
-    bachelorsDegreeColumn = []
-    totalLabourForceColumn = []
-    fullTimeWorkersColumn = []
+def addCensus(data, census):
+    delta_pop_column = []
+    delta_marriage_column = []
+    delta_commonlaw_column = []
+    delta_single_column = []
+    delta_english_column = []
+    delta_mandarin_column = []
+    delta_cantonese_column = []
     for row in data.itertuples():
         # i have no idea why region is _2
         # region also has trailing whitespace for some reason
         if row._2 is not None:
-            region = row._2 + ' '
+            region = row._2
 
             # Mother tongue for mandarin is row 730 or id = 712
-            num_mandarin = censusDF.iloc[728][region]
-            mandarinColumn.append(num_mandarin)
+            num_mandarin = census.loc['deltaCantonese', region]
+            delta_mandarin_column.append(num_mandarin)
 
             # Average income is row 1883, id = 1858, but need to go back 2? Using row 1881.
-            num_income = censusDF.iloc[1881][region]
-            avgIncomeColumn.append(num_income)
+            num_married = census.loc['deltaMarried', region]
+            delta_marriage_column.append(num_married)
 
             # in low income is row 2506
-            low_income = censusDF.iloc[2504][region]
-            lowIncomeColumn.append(low_income)
+            num_common = census.loc['deltaCommonLaw', region]
+            delta_commonlaw_column.append(num_common)
 
             # bachelors degree is row 4254
-            bachelors_degree = censusDF.iloc[4252][region]
-            bachelorsDegreeColumn.append(bachelors_degree)
+            num_single = census.loc['deltaSingle', region]
+            delta_single_column.append(num_single)
 
             # total labour force over the age of 15 is row 2233
-            totalLabour_force = censusDF.iloc[2231][region]
-            totalLabourForceColumn.append(totalLabour_force)
+            num_english = census.loc['deltaEnglish', region]
+            delta_english_column.append(num_english)
 
             #total people that worked full time in 2015 is row 2204
-            fullTimeWorkers = censusDF.iloc[2202][region]
-            fullTimeWorkersColumn.append(fullTimeWorkers)
+            num_canto = census.loc['deltaCantonese', region]
+            delta_cantonese_column.append(num_canto)
 
+            num_pop = census.loc['deltaPopulation', region]
+            delta_pop_column.append(num_pop)
 
         else:
-            mandarinColumn.append(0)
-            avgIncomeColumn.append(0)
-            lowIncomeColumn.append(0)
-            bachelorsDegreeColumn.append(0)
-            totalLabourForceColumn.append(0)
-            fullTimeWorkersColumn.append(0)
+            delta_mandarin_column.append(0)
+            delta_pop_column.append(0)
+            delta_cantonese_column.append(0)
+            delta_english_column.append(0)
+            delta_single_column.append(0)
+            delta_commonlaw_column.append(0)
+            delta_marriage_column.append(0)
 
-    data['native-mandarin'] = mandarinColumn
-    data['avg-income'] = avgIncomeColumn
-    data['low-income'] = lowIncomeColumn
-    data['bachelors-degree'] = bachelorsDegreeColumn
-    data['total-labour-force'] = totalLabourForceColumn
-    data['full-time-workers'] = fullTimeWorkersColumn
+    data['delta-mandarin'] = delta_mandarin_column
+    data['delta-population'] = delta_pop_column
+    data['delta-cantonese'] = delta_cantonese_column
+    data['delta-english'] = delta_english_column
+    data['delta-single'] = delta_single_column
+    data['delta-single'] = delta_commonlaw_column
+    data['delta-marriage'] = delta_marriage_column
 
     return
 
@@ -212,25 +217,28 @@ def deltaCensus2006_2011(census2006, census2011):
 
 # deltaCensus2006_2011(census2006, census2011)
 
-# merged_2006_2011 = mergePropTax2006_2011(prop2011subset)
+merged_2006_2011 = mergePropTax2006_2011(prop2011subset)
 # merged_2011_2016 = mergePropTax(subset, prop2011subset)
 
-# sqlcode2 = '''
-# select *
-# from addr_subset
-# inner join merged_2006_2011 on merged_2006_2011.LAND_COORDINATE=addr_subset.PCOORD
-# '''
-# newdf2 = ps.sqldf(sqlcode2, locals())
+sqlcode2 = '''
+select *
+from addr_subset
+inner join merged_2006_2011 on merged_2006_2011.LAND_COORDINATE=addr_subset.PCOORD
+'''
+merged_06_11_frame = ps.sqldf(sqlcode2, locals())
 
 # sqlcode = '''
 # select *
 # from addr_subset
 # inner join merged_2011_2016 on merged_2011_2016.LAND_COORDINATE=addr_subset.PCOORD
 # '''
-# newdf = ps.sqldf(sqlcode, locals())
+#newdf = ps.sqldf(sqlcode, locals())
 
 
-# addCensus(newdf)
-# dropColumns(newdf)
-# newdf = pd.get_dummies(newdf, columns = ['ZONE_CATEGORY', 'Geo Local Area', 'LEGAL_TYPE'],
-#                              prefix=['ZONE_CATEGORY', 'REGION', 'LEGAL_TYPE'])
+addCensus(merged_06_11_frame, censusDF)
+# Drop any unnecessary columns
+dropColumns(merged_06_11_frame)
+newdf = pd.get_dummies(merged_06_11_frame, columns = ['ZONE_CATEGORY', 'Geo Local Area', 'LEGAL_TYPE'],
+                              prefix=['ZONE_CATEGORY', 'REGION', 'LEGAL_TYPE'])
+
+newdf.to_csv('preprocessed_data.csv')
