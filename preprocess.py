@@ -15,6 +15,7 @@ censusDF = pd.read_csv("deltaCensus.csv")
 propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
 census2006 = pd.read_csv("CensusLocalAreaProfiles2006.csv", encoding="ISO-8859-1")
 census2011 = pd.read_csv("CensusLocalAreaProfiles2011.csv", encoding="ISO-8859-1")
+census2016 = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
 subset = propertyDF.sample(200000)
 addr_subset = addressDF
 prop2011subset = propertyDF2011.head(500000)
@@ -245,11 +246,65 @@ def deltaCensus2006_2011(census2006, census2011):
     # deltaCensus.to_csv(r'')
     pass
 
+def deltaCensus2006_2016(census2006, census2016):
+    census2016.drop(['Vancouver CSD '], inplace=True, axis=1)
+    census2016.drop(['Vancouver CMA '], inplace=True, axis=1)
+    census2016.drop(['ID'], inplace=True, axis=1)
+    census2016.rename(columns=lambda x: x.strip(), inplace=True)
+    census2006.drop(['Vancouver CSD (City of Vancouver)'], inplace=True, axis=1)
+    census2006.drop(['Vancouver CMA  (Metro Vancouver)'], inplace=True, axis=1)
+    
+    #population
+    population2006 = (census2006.iloc[1,1:].str.replace(',','').to_frame().T).astype(int)
+    population2016 = (census2016.iloc[0, 1:].to_frame().T).astype(int)
+
+    deltaCensus = population2016.combine_first(population2006)
+    deltaCensus.loc['deltaPopulation'] = deltaCensus.iloc[0] - deltaCensus.iloc[1]
+
+    #married 
+    married2006 = (census2006.iloc[76,1:].str.replace(',','').to_frame().T).astype(int)
+    married2016 = (census2016.iloc[105, 1:].to_frame().T).astype(int)
+    deltaCensus.loc['deltaMarried'] = married2016.iloc[0] - married2006.iloc[0]
+
+    #commonlaw
+    common2006 = (census2006.iloc[82,1:].str.replace(',','').to_frame().T).astype(int) 
+    common2016 = (census2016.iloc[106, 1:].to_frame().T).astype(int) 
+    deltaCensus.loc['deltaCommonLaw'] = common2016.iloc[0] - common2006.iloc[0]
+
+    #single
+    single2006 = (census2006.iloc[75,1:].str.replace(',','').to_frame().T).astype(int)
+    single2016 = (census2016.iloc[107, 1:].to_frame().T).astype(int)
+    deltaCensus.loc['deltaSingle'] = single2016.iloc[0] - single2006.iloc[0]
+
+    #english
+    english2006 = (census2006.iloc[85,1:].str.replace(',','').to_frame().T).astype(int)
+    english2016 = (census2016.iloc[225, 1:].to_frame().T).astype(int)
+    deltaCensus.loc['deltaEnglish'] = english2016.iloc[0] - english2006.iloc[0]
+
+    #mandarin
+    mandarin2006 = (census2006.iloc[168,1:].str.replace(',','').to_frame().T).astype(int)
+    mandarin2016 = (census2016.iloc[459, 1:].to_frame().T).astype(int)
+    deltaCensus.loc['deltaMandarin'] = mandarin2016.iloc[0] - mandarin2006.iloc[0]
+
+    #cantonese
+    cantonese2006 = (census2006.iloc[166,1:].str.replace(',','').to_frame().T).astype(int)
+    cantonese2016 = (census2016.iloc[457, 1:].to_frame().T).astype(int)
+    deltaCensus.loc['deltaCantonese'] = cantonese2016.iloc[0] - cantonese2006.iloc[0]   
+
+    #without income
+    no_income2006 = (census2006.iloc[1362,1:].str.replace(',','').to_frame().T).astype(int)
+    no_income2016 = (census2016.iloc[1929, 1:].to_frame().T).astype(int)
+    deltaCensus.loc['deltaWithouotIncome'] = no_income2016.iloc[0] - no_income2006.iloc[0]
+
+    print(deltaCensus)
+    pass
+
+# deltaCensus2006_2016(census2006, census2016)
 # deltaCensus2006_2011(census2006, census2011)
 
 # merged_2006_2011 = mergePropTax2006_2011(prop2011subset)
 # merged_2011_2016 = mergePropTax(subset, prop2011subset)
-merged_2006_2016_property = mergePropTax_2006_2016(property_only_2016, property_only_2006)
+# merged_2006_2016_property = mergePropTax_2006_2016(property_only_2016, property_only_2006)
 
 # sqlcode2 = '''
 # select *
@@ -266,14 +321,14 @@ merged_2006_2016_property = mergePropTax_2006_2016(property_only_2016, property_
 # '''
 #newdf = ps.sqldf(sqlcode, locals())
 
-sqlcode3 = '''
-select *
-from addr_subset
-inner join merged_2006_2016_property on merged_2006_2016_property.LAND_COORDINATE=addr_subset.PCOORD
-'''
+# sqlcode3 = '''
+# select *
+# from addr_subset
+# inner join merged_2006_2016_property on merged_2006_2016_property.LAND_COORDINATE=addr_subset.PCOORD
+# '''
 
-merged_2006_2016_frame = ps.sqldf(sqlcode3, locals())
-print(merged_2006_2016_frame.head(100).to_string())
+# merged_2006_2016_frame = ps.sqldf(sqlcode3, locals())
+# print(merged_2006_2016_frame.head(100).to_string())
 
 
 # addCensus(merged_06_11_frame, censusDF)
