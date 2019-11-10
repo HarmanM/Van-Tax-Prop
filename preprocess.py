@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 
 propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
 addressDF = pd.read_csv("property-addresses.csv", sep=";")
+property_only_2006 = pd.read_csv("property-tax-report-only-2006.csv", sep=";")
+property_only_2016 = pd.read_csv("property-tax-report-only-2016.csv", sep=";")
 censusDF = pd.read_csv("deltaCensus.csv")
 propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
 census2006 = pd.read_csv("CensusLocalAreaProfiles2006.csv", encoding="ISO-8859-1")
@@ -37,6 +39,31 @@ def mergePropTax(prop2016subset, prop2011subset):
     mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE'] = mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_y'] - mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_x']
     mergedPropertyDF.reset_index(inplace=True, drop=True)
     return mergedPropertyDF
+
+
+def mergePropTax_2006_2016(prop2016subset, prop2006subset):
+    # defining the columns we will be keeping in the 2006-2013 property tax dataset
+    cols_to_keep = ['PID', 'CURRENT_LAND_VALUE', 'CURRENT_IMPROVEMENT_VALUE', 'REPORT_YEAR', 'TAX_LEVY']
+    prop2016subset = prop2016subset[cols_to_keep]
+
+    # merging the two datasets on PID
+    mergedPropertyDF = prop2006subset.merge(prop2016subset, on='PID', how='inner')
+    mergedPropertyDF.dropna(axis=0, subset=['PID'], inplace=True)
+    mergedPropertyDF.dropna(axis=0, subset=['ZONE_CATEGORY'], inplace=True)
+
+    # dropping 'previous land value' and 'previous improvement value' cols since they are always nan
+    mergedPropertyDF.drop('PREVIOUS_LAND_VALUE', axis=1, inplace=True)
+    mergedPropertyDF.drop('PREVIOUS_IMPROVEMENT_VALUE', axis=1, inplace=True)
+
+    # getting the delta values by subtracting the two datasets (Note: the 2006-2013 property tax report dataset does not have any previous land value
+    # or previous improvement value entries
+    mergedPropertyDF['CURRENT_LAND_VALUE_DELTA'] = mergedPropertyDF['CURRENT_LAND_VALUE_y'] - mergedPropertyDF['CURRENT_LAND_VALUE_x']
+    mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_DELTA'] = mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_y'] - mergedPropertyDF['CURRENT_IMPROVEMENT_VALUE_x']
+    mergedPropertyDF.reset_index(inplace=True, drop=True)
+    return mergedPropertyDF
+
+
+
 
 
 #mergePropTax(subset, prop2011subset)
@@ -220,15 +247,17 @@ def deltaCensus2006_2011(census2006, census2011):
 
 # deltaCensus2006_2011(census2006, census2011)
 
-merged_2006_2011 = mergePropTax2006_2011(prop2011subset)
+# merged_2006_2011 = mergePropTax2006_2011(prop2011subset)
 # merged_2011_2016 = mergePropTax(subset, prop2011subset)
+merged_2006_2016_property = mergePropTax_2006_2016(property_only_2016, property_only_2006)
 
-sqlcode2 = '''
-select *
-from addr_subset
-inner join merged_2006_2011 on merged_2006_2011.LAND_COORDINATE=addr_subset.PCOORD
-'''
-merged_06_11_frame = ps.sqldf(sqlcode2, locals())
+# sqlcode2 = '''
+# select *
+# from addr_subset
+# inner join merged_2006_2011 on merged_2006_2011.LAND_COORDINATE=addr_subset.PCOORD
+# '''
+
+# merged_06_11_frame = ps.sqldf(sqlcode2, locals())
 
 # sqlcode = '''
 # select *
@@ -237,12 +266,21 @@ merged_06_11_frame = ps.sqldf(sqlcode2, locals())
 # '''
 #newdf = ps.sqldf(sqlcode, locals())
 
+sqlcode3 = '''
+select *
+from addr_subset
+inner join merged_2006_2016_property on merged_2006_2016_property.LAND_COORDINATE=addr_subset.PCOORD
+'''
 
-addCensus(merged_06_11_frame, censusDF)
-print(merged_06_11_frame.head(100).to_string())
-# Drop any unnecessary columns
-dropColumns(merged_06_11_frame)
-newdf = pd.get_dummies(merged_06_11_frame, columns = ['ZONE_CATEGORY', 'Geo Local Area', 'LEGAL_TYPE'],
-                              prefix=['ZONE_CATEGORY', 'REGION', 'LEGAL_TYPE'])
-newdf.to_csv('preprocessed_complete_2006_2011.csv')
+merged_2006_2016_frame = ps.sqldf(sqlcode3, locals())
+print(merged_2006_2016_frame.head(100).to_string())
+
+
+# addCensus(merged_06_11_frame, censusDF)
+# print(merged_06_11_frame.head(100).to_string())
+# # Drop any unnecessary columns
+# dropColumns(merged_06_11_frame)
+# newdf = pd.get_dummies(merged_06_11_frame, columns = ['ZONE_CATEGORY', 'Geo Local Area', 'LEGAL_TYPE'],
+#                               prefix=['ZONE_CATEGORY', 'REGION', 'LEGAL_TYPE'])
+# newdf.to_csv('preprocessed_complete_2006_2011.csv')
 # newdf.to_csv('preprocessed_data.csv')
