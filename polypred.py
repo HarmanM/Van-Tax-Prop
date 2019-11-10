@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
 
 def poly_kfoldCV(x, y, K, p):
     subset_in = np.array_split(x, K)
@@ -53,18 +54,37 @@ def poly_kfoldCV(x, y, K, p):
             lst.append(tmp)
         t_mae.append(np.mean(lst))
 
-        print(c_mae)
-        print(t_mae)
 
     train_error = np.mean(t_mae)
     cv_error = np.mean(c_mae)
     return cv_error, train_error
 
 
-data = pd.read_csv("new_output.csv")
+data = pd.read_csv("preprocessed_complete_2006_2011.csv")
 subset = data.loc[:, data.columns != 'STREET_NAME']
 subset = subset.loc[:,  subset.columns != 'PROPERTY_POSTAL_CODE']
 subset = subset.loc[:, subset.columns != 'Unnamed: 0']
+subset = subset.loc[:, subset.columns != 'PID']
+subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE_x']
+subset = subset.loc[:, subset.columns != 'CURRENT_IMPROVEMENT_VALUE_x']
+subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE_y']
+subset = subset.loc[:, subset.columns != 'CURRENT_IMPROVEMENT_VALUE_y']
+subset = subset.loc[:, subset.columns != 'REPORT_YEAR_x']
+subset = subset.loc[:, subset.columns != 'REPORT_YEAR_y']
+subset = subset.loc[:, subset.columns != 'STREET_NAME']
+subset = subset.loc[:, subset.columns != 'TAX_ASSESSMENT_YEAR']
+subset = subset.loc[:, subset.columns != 'PREVIOUS_IMPROVEMENT_VALUE']
+subset = subset.loc[:, subset.columns != 'PREVIOUS_LAND_VALUE']
+
+subset = subset.loc[:, subset.columns != 'CURRENT_IMPROVEMENT_VALUE']
+subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_STRATA']
+subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_LAND']
+subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_OTHER']
+subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_One Family Dwelling']
+subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Multiple Family Dwelling']
+subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Two Family Dwelling']
+subset = subset.loc[:, subset.columns != 'REGION_South Cambie']
+subset = subset.dropna(axis=0, how='any', inplace=False)
 
 train_ratio = 0.75
 num_rows = subset.shape[0]
@@ -76,10 +96,25 @@ data_out = subset.loc[:, 'CURRENT_LAND_VALUE']
 training_data_in = data_in[:train_set_size]
 training_data_out = data_out[:train_set_size]
 
+training_data_in = StandardScaler(with_mean=True, with_std=True).fit_transform(training_data_in)
+
 test_data_in = data_in[train_set_size:]
 test_data_out = data_out[train_set_size:]
 
 
-result = poly_kfoldCV(training_data_in, training_data_out, 5, 1)
-print(result)
+pt3_train_arr = []
+pt3_valid_arr = []
+for i in range(16):
+    if i > 1:
+        print(i)
+        kfold_result = poly_kfoldCV(training_data_in, training_data_out, i + 1, 1)
+        pt3_train_arr.append(kfold_result[1])
+        pt3_valid_arr.append(kfold_result[0])
 
+plt.plot(range(2, 16), pt3_train_arr)
+plt.plot(range(2, 16), pt3_valid_arr)
+plt.suptitle("Learning curve plot for p vs. mae")
+plt.xlabel("degree of fitting polynomial")
+plt.ylabel("Error")
+plt.legend(['y = train_error', 'y = cv_error'], loc='upper left')
+plt.show()

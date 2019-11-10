@@ -51,17 +51,37 @@ def ridge_kfoldCV(x, y, K, alph):
     return cv_error, train_error
 
 
-data = pd.read_csv("new_output.csv")
+data = pd.read_csv("preprocessed_complete_2006_2011.csv")
 subset = data.loc[:, data.columns != 'STREET_NAME']
 subset = subset.loc[:,  subset.columns != 'PROPERTY_POSTAL_CODE']
 subset = subset.loc[:, subset.columns != 'Unnamed: 0']
+subset = subset.loc[:, subset.columns != 'PID']
+subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE_x']
+subset = subset.loc[:, subset.columns != 'CURRENT_IMPROVEMENT_VALUE_x']
+subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE_y']
+subset = subset.loc[:, subset.columns != 'CURRENT_IMPROVEMENT_VALUE_y']
+subset = subset.loc[:, subset.columns != 'REPORT_YEAR_x']
+subset = subset.loc[:, subset.columns != 'REPORT_YEAR_y']
+subset = subset.loc[:, subset.columns != 'STREET_NAME']
+subset = subset.loc[:, subset.columns != 'TAX_ASSESSMENT_YEAR']
+subset = subset.loc[:, subset.columns != 'PREVIOUS_IMPROVEMENT_VALUE']
+subset = subset.loc[:, subset.columns != 'PREVIOUS_LAND_VALUE']
+subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE']
+subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_STRATA']
+subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_LAND']
+subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_OTHER']
+subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_One Family Dwelling']
+subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Multiple Family Dwelling']
+subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Two Family Dwelling']
+subset = subset.loc[:, subset.columns != 'REGION_South Cambie']
+subset = subset.dropna(axis=0, how='any', inplace=False)
 
 train_ratio = 0.75
 num_rows = subset.shape[0]
 train_set_size = int(train_ratio * num_rows)
 
-data_in = subset.drop('CURRENT_LAND_VALUE', axis=1, inplace=False)
-data_out = subset.loc[:,'CURRENT_LAND_VALUE']
+data_in = subset.drop('CURRENT_IMPROVEMENT_VALUE', axis=1, inplace=False)
+data_out = subset.loc[:, 'CURRENT_IMPROVEMENT_VALUE']
 
 training_data_in = data_in[:train_set_size]
 training_data_out = data_out[:train_set_size]
@@ -81,6 +101,14 @@ for i in range(len(alpha)):
     mae_vals = ridge_kfoldCV(ridge_train, training_data_out, 5, alpha[i])
     c_mae_array.append(mae_vals[0])
     t_mae_array.append(mae_vals[1])
+    chosenLamb = Ridge(alpha=alpha[i])
+    chosenLamb.fit(ridge_train, training_data_out)
+    coeffs = chosenLamb.coef_
+    index = np.argpartition(np.abs(coeffs), -5)[-5:]
+    print("\nTop five features for Ridge\n: ")
+    for i in index:
+        print(subset.columns[i])
+        print(coeffs[i])
 
 plt.plot(alpha_plot, c_mae_array)
 plt.plot(alpha_plot, t_mae_array)
@@ -89,3 +117,4 @@ plt.xlabel("λ = ")
 plt.ylabel("Errors")
 plt.legend(['y = cv_error', 'y = train_error'], loc='upper left')
 plt.show()
+
