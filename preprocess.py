@@ -7,18 +7,19 @@ from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
-propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
-addressDF = pd.read_csv("property-addresses.csv", sep=";")
-property_only_2006 = pd.read_csv("property-tax-report-only-2006.csv", sep=";")
-property_only_2016 = pd.read_csv("property-tax-report-only-2016.csv", sep=";")
-censusDF = pd.read_csv("deltaCensus.csv")
-propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
-census2006 = pd.read_csv("CensusLocalAreaProfiles2006.csv", encoding="ISO-8859-1")
-census2011 = pd.read_csv("CensusLocalAreaProfiles2011.csv", encoding="ISO-8859-1")
-census2016 = pd.read_csv("CensusLocalAreaProfiles2016.csv", encoding="ISO-8859-1")
-subset = propertyDF.sample(200000)
-addr_subset = addressDF
-prop2011subset = propertyDF2011.head(500000)
+# propertyDF = pd.read_csv("property-tax-report.csv", sep=";")
+# addressDF = pd.read_csv("property-addresses.csv", sep=";")
+# property_only_2006 = pd.read_csv("property-tax-report-only-2006.csv", sep=";")
+# property_only_2016 = pd.read_csv("property-tax-report-only-2016.csv", sep=";")
+# censusDF = pd.read_csv("deltaCensus.csv")
+# propertyDF2011 = pd.read_csv("property-tax-report-2006-2013.csv", sep=";")
+census2006 = pd.read_csv("census2006_prepros.csv",  encoding="ISO-8859-1", sep=",")
+# census2011 = pd.read_csv("CensusLocalAreaProfiles2011.csv", encoding="ISO-8859-1")
+census2016 = pd.read_csv("census2016_prepros.csv",  encoding="ISO-8859-1", sep=",")
+
+# subset = propertyDF.sample(200000)
+# addr_subset = addressDF
+# prop2011subset = propertyDF2011.head(500000)
 
 
 def mergePropTax(prop2016subset, prop2011subset):
@@ -196,12 +197,28 @@ def mergePropTax2006_2011(prop2011subset):
     print(mergedPropertyDF.shape)
     return mergedPropertyDF
 
+def census2006_2016(census2006, census2016):
+    census2006 = census2006.replace(',','', regex=True)
+
+    deltaCensus = pd.DataFrame(columns=['Arbutus-Ridge','Downtown','Dunbar-Southlands','Fairview','Hastings-Sunrise','Kensington-Cedar Cottage','Kerrisdale'
+        ,'Killarney','Kitsilano','Marpole','Mount Pleasant','Oakridge','Renfrew-Collingwood','Riley Park','Shaughnessy','South Cambie',
+        'Strathcona','Sunset','Victoria-Fraserview','West End','West Point Grey'])
+
+    for i in range(0,45):
+        row2006 = (census2006.iloc[i, 1:].str.replace('$','').to_frame().T).astype(int)
+        row2016 = (census2016.iloc[i, 1:].to_frame().T).astype(int)
+        deltaCensus.loc[census2006.iloc[i,0]] = row2016.iloc[0] - row2006.iloc[0]
+
+    print(deltaCensus)
+    deltaCensus.to_csv('deltaCensus.csv')
+
+
 def deltaCensus2006_2011(census2006, census2011):
     census2011.drop(['Vancouver CSD (City)'], inplace=True, axis=1)
     census2011.drop(['CMA of Vancouver'], inplace=True, axis=1)
     census2006.drop(['Vancouver CSD (City of Vancouver)'], inplace=True, axis=1)
     census2006.drop(['Vancouver CMA  (Metro Vancouver)'], inplace=True, axis=1)
-
+    
     #population
     population2006 = (census2006.iloc[1,1:].str.replace(',','').to_frame().T).astype(int)
     population2011 = (census2011.iloc[0, 1:].str.replace(',','').to_frame().T).astype(int)
@@ -294,11 +311,30 @@ def deltaCensus2006_2016(census2006, census2016):
     #without income
     no_income2006 = (census2006.iloc[1362,1:].str.replace(',','').to_frame().T).astype(int)
     no_income2016 = (census2016.iloc[1929, 1:].to_frame().T).astype(int)
-    deltaCensus.loc['deltaWithouotIncome'] = no_income2016.iloc[0] - no_income2006.iloc[0]
+    deltaCensus.loc['deltaWithoutIncome'] = no_income2016.iloc[0] - no_income2006.iloc[0]
 
+    #with income
+    with_income2006 = (census2006.iloc[1363,1:].str.replace(',','').to_frame().T).astype(int)
+    with_income2016 = (census2016.iloc[1930, 1:].to_frame().T).astype(int)
+    deltaCensus.loc['deltaWithIncome'] = with_income2016.iloc[0] - with_income2006.iloc[0]
+
+    #avg income
+    avg_income2006 = (census2006.iloc[1381,1:].str.replace(',','').str.replace('$','').to_frame().T).astype(int)
+    avg_income2016 = (census2016.iloc[1881, 1:].to_frame().T).astype(int)
+    deltaCensus.loc['deltaAvgIncome'] = avg_income2016.iloc[0] - avg_income2006.iloc[0]
+
+    #number of people in private households
+    persons_private_household2006 = (census2006.iloc[1641,1:].str.replace(',','').to_frame().T).astype(int)
+    persons_private_household2016 = (census2016.iloc[166, 1:].to_frame().T).astype(int)
+    deltaCensus.loc['deltaPersonsPrivateHousehold'] = persons_private_household2016.iloc[0] - persons_private_household2006.iloc[0]
+
+
+    deltaCensus = deltaCensus.iloc[2:]
     print(deltaCensus)
+    # print(persons_private_household2006)
+    # print(persons_private_household2016)
     pass
-
+census2006_2016(census2006, census2016)
 # deltaCensus2006_2016(census2006, census2016)
 # deltaCensus2006_2011(census2006, census2011)
 
