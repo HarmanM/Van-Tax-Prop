@@ -51,7 +51,7 @@ def ridge_kfoldCV(x, y, K, alph):
     return cv_error, train_error
 
 
-data = pd.read_csv("preprocessed_complete_2006_2011.csv")
+data = pd.read_csv("preprocessed_complete_2006_2016.csv")
 subset = data.loc[:, data.columns != 'STREET_NAME']
 subset = subset.loc[:,  subset.columns != 'PROPERTY_POSTAL_CODE']
 subset = subset.loc[:, subset.columns != 'Unnamed: 0']
@@ -66,22 +66,23 @@ subset = subset.loc[:, subset.columns != 'STREET_NAME']
 subset = subset.loc[:, subset.columns != 'TAX_ASSESSMENT_YEAR']
 subset = subset.loc[:, subset.columns != 'PREVIOUS_IMPROVEMENT_VALUE']
 subset = subset.loc[:, subset.columns != 'PREVIOUS_LAND_VALUE']
-subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE']
-subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_STRATA']
-subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_LAND']
-subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_OTHER']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_One Family Dwelling']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Multiple Family Dwelling']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Two Family Dwelling']
-subset = subset.loc[:, subset.columns != 'REGION_South Cambie']
+# subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE_DELTA']
+subset = subset.loc[:, subset.columns != 'TAX_LEVY_x']
+subset = subset.loc[:, subset.columns != 'TAX_LEVY_y']
+subset = subset.loc[:, subset.columns != 'YEAR_BUILT']
+subset = subset.loc[:, subset.columns != 'BIG_IMPROVEMENT_YEAR']
+subset = subset.loc[:, subset.columns != ' Total - Age groups and average age of the population - 100% data ']
+subset = subset.loc[:, subset.columns != ' Total population 15 years and over by presence of children and labour force activity ']
+subset = subset.loc[:, subset.columns != 'family income']
+subset = subset.loc[:, subset.columns != 'total martial status']
 subset = subset.dropna(axis=0, how='any', inplace=False)
 
 train_ratio = 0.75
 num_rows = subset.shape[0]
 train_set_size = int(train_ratio * num_rows)
 
-data_in = subset.drop('CURRENT_IMPROVEMENT_VALUE', axis=1, inplace=False)
-data_out = subset.loc[:, 'CURRENT_IMPROVEMENT_VALUE']
+data_in = subset.drop('CURRENT_IMPROVEMENT_VALUE_DELTA', axis=1, inplace=False)
+data_out = subset.loc[:, 'CURRENT_IMPROVEMENT_VALUE_DELTA']
 
 training_data_in = data_in[:train_set_size]
 training_data_out = data_out[:train_set_size]
@@ -92,6 +93,8 @@ test_data_out = data_out[train_set_size:]
 ridge_test = StandardScaler(with_mean=True, with_std=True).fit_transform(test_data_in)
 ridge_train = StandardScaler(with_mean=True, with_std=True).fit_transform(training_data_in)
 
+# print(training_data_in.head(200).to_string())
+
 alpha = [10**-3, 10**-2, 10**-1, 10**0, 10**1, 10**2, 10**3, 10**4, 10**5, 10**6, 10**7, 10**8, 10**9, 10**10]
 alpha_plot = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
@@ -101,6 +104,7 @@ for i in range(len(alpha)):
     mae_vals = ridge_kfoldCV(ridge_train, training_data_out, 5, alpha[i])
     c_mae_array.append(mae_vals[0])
     t_mae_array.append(mae_vals[1])
+
     chosenLamb = Ridge(alpha=alpha[i])
     chosenLamb.fit(ridge_train, training_data_out)
     coeffs = chosenLamb.coef_

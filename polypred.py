@@ -75,15 +75,21 @@ subset = subset.loc[:, subset.columns != 'STREET_NAME']
 subset = subset.loc[:, subset.columns != 'TAX_ASSESSMENT_YEAR']
 subset = subset.loc[:, subset.columns != 'PREVIOUS_IMPROVEMENT_VALUE']
 subset = subset.loc[:, subset.columns != 'PREVIOUS_LAND_VALUE']
-
 subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE_DELTA']
+subset = subset.loc[:, subset.columns != 'TAX_LEVY_x']
+subset = subset.loc[:, subset.columns != 'TAX_LEVY_y']
+subset = subset.loc[:, subset.columns != 'YEAR_BUILT']
+subset = subset.loc[:, subset.columns != 'BIG_IMPROVEMENT_YEAR']
+subset = subset.loc[:, subset.columns != ' Total - Age groups and average age of the population - 100% data ']
+subset = subset.loc[:, subset.columns != ' Total population 15 years and over by presence of children and labour force activity ']
+subset = subset.loc[:, subset.columns != 'family income']
+subset = subset.loc[:, subset.columns != 'total martial status']
 subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_STRATA']
 subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_LAND']
 subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_OTHER']
 subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_One Family Dwelling']
 subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Multiple Family Dwelling']
 subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Two Family Dwelling']
-subset = subset.loc[:, subset.columns != 'REGION_South Cambie']
 subset = subset.dropna(axis=0, how='any', inplace=False)
 
 train_ratio = 0.75
@@ -106,10 +112,10 @@ pt3_train_arr = []
 pt3_valid_arr = []
 for i in range(16):
     if i > 1:
-        print(i)
-        kfold_result = poly_kfoldCV(training_data_in, training_data_out, i + 1, 2)
+        kfold_result = poly_kfoldCV(training_data_in, training_data_out, i + 1, 1)
         pt3_train_arr.append(kfold_result[1])
         pt3_valid_arr.append(kfold_result[0])
+        print(i, "training: ", kfold_result[1], "cv: ", kfold_result[0])
 
 plt.plot(range(2, 16), pt3_train_arr)
 plt.plot(range(2, 16), pt3_valid_arr)
