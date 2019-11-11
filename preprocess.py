@@ -334,7 +334,7 @@ def deltaCensus2006_2016(census2006, census2016):
     # print(persons_private_household2006)
     # print(persons_private_household2016)
     pass
-census2006_2016(census2006, census2016)
+# census2006_2016(census2006, census2016)
 # deltaCensus2006_2016(census2006, census2016)
 # deltaCensus2006_2011(census2006, census2011)
 
