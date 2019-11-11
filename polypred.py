@@ -60,7 +60,7 @@ def poly_kfoldCV(x, y, K, p):
     return cv_error, train_error
 
 
-data = pd.read_csv("preprocessed_complete_2006_2011.csv")
+data = pd.read_csv("preprocessed_complete_2006_2016.csv")
 subset = data.loc[:, data.columns != 'STREET_NAME']
 subset = subset.loc[:,  subset.columns != 'PROPERTY_POSTAL_CODE']
 subset = subset.loc[:, subset.columns != 'Unnamed: 0']
@@ -76,7 +76,7 @@ subset = subset.loc[:, subset.columns != 'TAX_ASSESSMENT_YEAR']
 subset = subset.loc[:, subset.columns != 'PREVIOUS_IMPROVEMENT_VALUE']
 subset = subset.loc[:, subset.columns != 'PREVIOUS_LAND_VALUE']
 
-subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE']
+subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE_DELTA']
 subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_STRATA']
 subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_LAND']
 subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_OTHER']
@@ -90,8 +90,8 @@ train_ratio = 0.75
 num_rows = subset.shape[0]
 train_set_size = int(train_ratio * num_rows)
 
-data_in = subset.drop('CURRENT_IMPROVEMENT_VALUE', axis=1, inplace=False)
-data_out = subset.loc[:, 'CURRENT_IMPROVEMENT_VALUE']
+data_in = subset.drop('CURRENT_IMPROVEMENT_VALUE_DELTA', axis=1, inplace=False)
+data_out = subset.loc[:, 'CURRENT_IMPROVEMENT_VALUE_DELTA']
 
 training_data_in = data_in[:train_set_size]
 training_data_out = data_out[:train_set_size]
@@ -107,7 +107,7 @@ pt3_valid_arr = []
 for i in range(16):
     if i > 1:
         print(i)
-        kfold_result = poly_kfoldCV(training_data_in, training_data_out, i + 1, 1)
+        kfold_result = poly_kfoldCV(training_data_in, training_data_out, i + 1, 2)
         pt3_train_arr.append(kfold_result[1])
         pt3_valid_arr.append(kfold_result[0])
 
