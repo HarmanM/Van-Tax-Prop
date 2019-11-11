@@ -200,7 +200,7 @@ def mergePropTax2006_2011(prop2011subset):
 def census2006_2016(census2006, census2016):
     census2006 = census2006.replace(',','', regex=True)
 
-    deltaCensus = pd.DataFrame(columns=['Arbutus-Ridge','Downtown','Dunbar-Southlands','Fairview','Hastings-Sunrise','Kensington-Cedar Cottage','Kerrisdale'
+    deltaCensus = pd.DataFrame(columns=['Arbutus-Ridge','Downtown','Dunbar-Southlands','Fairview','Grandview-Woodland', 'Hastings-Sunrise','Kensington-Cedar Cottage','Kerrisdale'
         ,'Killarney','Kitsilano','Marpole','Mount Pleasant','Oakridge','Renfrew-Collingwood','Riley Park','Shaughnessy','South Cambie',
         'Strathcona','Sunset','Victoria-Fraserview','West End','West Point Grey'])
 
@@ -213,130 +213,8 @@ def census2006_2016(census2006, census2016):
     deltaCensus.to_csv('deltaCensus.csv')
 
 
-def deltaCensus2006_2011(census2006, census2011):
-    census2011.drop(['Vancouver CSD (City)'], inplace=True, axis=1)
-    census2011.drop(['CMA of Vancouver'], inplace=True, axis=1)
-    census2006.drop(['Vancouver CSD (City of Vancouver)'], inplace=True, axis=1)
-    census2006.drop(['Vancouver CMA  (Metro Vancouver)'], inplace=True, axis=1)
-    
-    #population
-    population2006 = (census2006.iloc[1,1:].str.replace(',','').to_frame().T).astype(int)
-    population2011 = (census2011.iloc[0, 1:].str.replace(',','').to_frame().T).astype(int)
+census2006_2016(census2006, census2016)
 
-    deltaCensus = population2011.combine_first(population2006)
-    deltaCensus.loc['deltaPopulation'] = deltaCensus.iloc[0] - deltaCensus.iloc[1]
-    
-    #married 
-    married2006 = (census2006.iloc[76,1:].str.replace(',','').to_frame().T).astype(int)
-    married2011 = (census2011.iloc[80, 1:].str.replace(',','').to_frame().T).astype(int)
-    deltaCensus.loc['deltaMarried'] = married2011.iloc[0] - married2006.iloc[0]
-
-    #commonlaw
-    common2006 = (census2006.iloc[82,1:].str.replace(',','').to_frame().T).astype(int) 
-    common2011 = (census2011.iloc[81, 1:].str.replace(',','').to_frame().T).astype(int) 
-    deltaCensus.loc['deltaCommonLaw'] = common2011.iloc[0] - common2006.iloc[0]
-
-    #single
-    single2006 = (census2006.iloc[75,1:].str.replace(',','').to_frame().T).astype(int)
-    single2011 = (census2011.iloc[83, 1:].str.replace(',','').to_frame().T).astype(int)
-    deltaCensus.loc['deltaSingle'] = single2011.iloc[0] - single2006.iloc[0]
-
-    #english
-    english2006 = (census2006.iloc[85,1:].str.replace(',','').to_frame().T).astype(int)
-    english2011 = (census2011.iloc[215, 1:].str.replace(',','').to_frame().T).astype(int)
-    deltaCensus.loc['deltaEnglish'] = english2011.iloc[0] - english2006.iloc[0]
-
-    #mandarin
-    mandarin2006 = (census2006.iloc[168,1:].str.replace(',','').to_frame().T).astype(int)
-    mandarin2011 = (census2011.iloc[276, 1:].str.replace(',','').to_frame().T).astype(int)
-    deltaCensus.loc['deltaMandarin'] = mandarin2011.iloc[0] - mandarin2006.iloc[0]
-
-    #cantonese
-    cantonese2006 = (census2006.iloc[166,1:].str.replace(',','').to_frame().T).astype(int)
-    cantonese2011 = (census2011.iloc[243, 1:].str.replace(',','').to_frame().T).astype(int)
-    deltaCensus.loc['deltaCantonese'] = cantonese2011.iloc[0] - cantonese2006.iloc[0]   
-
-    deltaCensus = deltaCensus.iloc[2:]
-    print(deltaCensus)
-    print(deltaCensus['delta-cantonese', region])
-
-    # deltaCensus.to_csv(r'')
-    pass
-
-def deltaCensus2006_2016(census2006, census2016):
-    census2016.drop(['Vancouver CSD '], inplace=True, axis=1)
-    census2016.drop(['Vancouver CMA '], inplace=True, axis=1)
-    census2016.drop(['ID'], inplace=True, axis=1)
-    census2016.rename(columns=lambda x: x.strip(), inplace=True)
-    census2006.drop(['Vancouver CSD (City of Vancouver)'], inplace=True, axis=1)
-    census2006.drop(['Vancouver CMA  (Metro Vancouver)'], inplace=True, axis=1)
-    
-    #population
-    population2006 = (census2006.iloc[1,1:].str.replace(',','').to_frame().T).astype(int)
-    population2016 = (census2016.iloc[0, 1:].to_frame().T).astype(int)
-
-    deltaCensus = population2016.combine_first(population2006)
-    deltaCensus.loc['deltaPopulation'] = deltaCensus.iloc[0] - deltaCensus.iloc[1]
-
-    #married 
-    married2006 = (census2006.iloc[76,1:].str.replace(',','').to_frame().T).astype(int)
-    married2016 = (census2016.iloc[105, 1:].to_frame().T).astype(int)
-    deltaCensus.loc['deltaMarried'] = married2016.iloc[0] - married2006.iloc[0]
-
-    #commonlaw
-    common2006 = (census2006.iloc[82,1:].str.replace(',','').to_frame().T).astype(int) 
-    common2016 = (census2016.iloc[106, 1:].to_frame().T).astype(int) 
-    deltaCensus.loc['deltaCommonLaw'] = common2016.iloc[0] - common2006.iloc[0]
-
-    #single
-    single2006 = (census2006.iloc[75,1:].str.replace(',','').to_frame().T).astype(int)
-    single2016 = (census2016.iloc[107, 1:].to_frame().T).astype(int)
-    deltaCensus.loc['deltaSingle'] = single2016.iloc[0] - single2006.iloc[0]
-
-    #english
-    english2006 = (census2006.iloc[85,1:].str.replace(',','').to_frame().T).astype(int)
-    english2016 = (census2016.iloc[225, 1:].to_frame().T).astype(int)
-    deltaCensus.loc['deltaEnglish'] = english2016.iloc[0] - english2006.iloc[0]
-
-    #mandarin
-    mandarin2006 = (census2006.iloc[168,1:].str.replace(',','').to_frame().T).astype(int)
-    mandarin2016 = (census2016.iloc[459, 1:].to_frame().T).astype(int)
-    deltaCensus.loc['deltaMandarin'] = mandarin2016.iloc[0] - mandarin2006.iloc[0]
-
-    #cantonese
-    cantonese2006 = (census2006.iloc[166,1:].str.replace(',','').to_frame().T).astype(int)
-    cantonese2016 = (census2016.iloc[457, 1:].to_frame().T).astype(int)
-    deltaCensus.loc['deltaCantonese'] = cantonese2016.iloc[0] - cantonese2006.iloc[0]   
-
-    #without income
-    no_income2006 = (census2006.iloc[1362,1:].str.replace(',','').to_frame().T).astype(int)
-    no_income2016 = (census2016.iloc[1929, 1:].to_frame().T).astype(int)
-    deltaCensus.loc['deltaWithoutIncome'] = no_income2016.iloc[0] - no_income2006.iloc[0]
-
-    #with income
-    with_income2006 = (census2006.iloc[1363,1:].str.replace(',','').to_frame().T).astype(int)
-    with_income2016 = (census2016.iloc[1930, 1:].to_frame().T).astype(int)
-    deltaCensus.loc['deltaWithIncome'] = with_income2016.iloc[0] - with_income2006.iloc[0]
-
-    #avg income
-    avg_income2006 = (census2006.iloc[1381,1:].str.replace(',','').str.replace('$','').to_frame().T).astype(int)
-    avg_income2016 = (census2016.iloc[1881, 1:].to_frame().T).astype(int)
-    deltaCensus.loc['deltaAvgIncome'] = avg_income2016.iloc[0] - avg_income2006.iloc[0]
-
-    #number of people in private households
-    persons_private_household2006 = (census2006.iloc[1641,1:].str.replace(',','').to_frame().T).astype(int)
-    persons_private_household2016 = (census2016.iloc[166, 1:].to_frame().T).astype(int)
-    deltaCensus.loc['deltaPersonsPrivateHousehold'] = persons_private_household2016.iloc[0] - persons_private_household2006.iloc[0]
-
-
-    deltaCensus = deltaCensus.iloc[2:]
-    print(deltaCensus)
-    # print(persons_private_household2006)
-    # print(persons_private_household2016)
-    pass
-# census2006_2016(census2006, census2016)
-# deltaCensus2006_2016(census2006, census2016)
-# deltaCensus2006_2011(census2006, census2011)
 
 # merged_2006_2011 = mergePropTax2006_2011(prop2011subset)
 # merged_2011_2016 = mergePropTax(subset, prop2011subset)
