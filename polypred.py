@@ -76,7 +76,7 @@ subset = subset.loc[:, subset.columns != 'TAX_ASSESSMENT_YEAR']
 subset = subset.loc[:, subset.columns != 'PREVIOUS_IMPROVEMENT_VALUE']
 subset = subset.loc[:, subset.columns != 'PREVIOUS_LAND_VALUE']
 
-subset = subset.loc[:, subset.columns != 'CURRENT_IMPROVEMENT_VALUE']
+subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE']
 subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_STRATA']
 subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_LAND']
 subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_OTHER']
@@ -90,8 +90,8 @@ train_ratio = 0.75
 num_rows = subset.shape[0]
 train_set_size = int(train_ratio * num_rows)
 
-data_in = subset.drop('CURRENT_LAND_VALUE', axis=1, inplace=False)
-data_out = subset.loc[:, 'CURRENT_LAND_VALUE']
+data_in = subset.drop('CURRENT_IMPROVEMENT_VALUE', axis=1, inplace=False)
+data_out = subset.loc[:, 'CURRENT_IMPROVEMENT_VALUE']
 
 training_data_in = data_in[:train_set_size]
 training_data_out = data_out[:train_set_size]
