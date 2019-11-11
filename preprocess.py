@@ -70,63 +70,25 @@ def mergePropTax_2006_2016(prop2016subset, prop2006subset):
 
 #mergePropTax(subset, prop2011subset)
 def addCensus(data, census):
-    delta_pop_column = []
-    delta_marriage_column = []
-    delta_commonlaw_column = []
-    delta_single_column = []
-    delta_english_column = []
-    delta_mandarin_column = []
-    delta_cantonese_column = []
-    for row in data.itertuples():
-        # i have no idea why region is _2
-        # region also has trailing whitespace for some reason
+    index_count = 0
+    for census_row in census.itertuples():
+        feature_name = census_row.iloc[index_count]['Unnamed: 0']
+        feature_array = []
+        for row in data.itertuples():
 
-        if row._2 is not None:
-            region = row._2
-            # Mother tongue for mandarin is row 730 or id = 712
-            num_mandarin = census.iloc[5][region]
-            delta_mandarin_column.append(num_mandarin)
+            # i have no idea why region is _2
+            if row._2 is not None:
+                region = row._2
+                # Find number based on region
+                num_features = census.iloc[index_count][region]
+                feature_array.append(num_features)
 
-            # Average income is row 1883, id = 1858, but need to go back 2? Using row 1881.
-            num_married = census.iloc[1][region]
-            delta_marriage_column.append(num_married)
 
-            # in low income is row 2506
-            num_common = census.loc[2][region]
-            delta_commonlaw_column.append(num_common)
+            else:
+                feature_array.append(0)
 
-            # bachelors degree is row 4254
-            num_single = census.loc[3][region]
-            delta_single_column.append(num_single)
-
-            # total labour force over the age of 15 is row 2233
-            num_english = census.loc[4][region]
-            delta_english_column.append(num_english)
-
-            #total people that worked full time in 2015 is row 2204
-            num_canto = census.loc[6][region]
-            delta_cantonese_column.append(num_canto)
-
-            num_pop = census.loc[0][region]
-            delta_pop_column.append(num_pop)
-
-        else:
-            delta_mandarin_column.append(0)
-            delta_pop_column.append(0)
-            delta_cantonese_column.append(0)
-            delta_english_column.append(0)
-            delta_single_column.append(0)
-            delta_commonlaw_column.append(0)
-            delta_marriage_column.append(0)
-
-    data['delta-mandarin'] = delta_mandarin_column
-    data['delta-population'] = delta_pop_column
-    data['delta-cantonese'] = delta_cantonese_column
-    data['delta-english'] = delta_english_column
-    data['delta-single'] = delta_single_column
-    data['delta-single'] = delta_commonlaw_column
-    data['delta-marriage'] = delta_marriage_column
-
+        data[feature_name] = num_features
+        index_count += 1
     return
 
 # pass in the dataframe and the year that you want to filter by
