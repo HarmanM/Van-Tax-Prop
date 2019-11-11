@@ -175,7 +175,7 @@ def census2006_2016(census2006, census2016):
     deltaCensus.to_csv('deltaCensus.csv')
 
 
-census2006_2016(census2006, census2016)
+# census2006_2016(census2006, census2016)
 
 
 # merged_2006_2011 = mergePropTax2006_2011(prop2011subset)
