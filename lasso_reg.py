@@ -44,12 +44,45 @@ def lasso_kfoldCV(x, y, p, k):
     return train_err, cv_err
 
 
-data = pd.read_csv("new_output.csv")
+data = pd.read_csv("preprocessed_complete_2006_2016_v2.csv")
 subset = data.loc[:, data.columns != 'STREET_NAME']
 subset = subset.loc[:,  subset.columns != 'PROPERTY_POSTAL_CODE']
 subset = subset.loc[:, subset.columns != 'Unnamed: 0']
+subset = subset.loc[:, subset.columns != 'PID']
+subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE_x']
+subset = subset.loc[:, subset.columns != 'CURRENT_IMPROVEMENT_VALUE_x']
+subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE_y']
+subset = subset.loc[:, subset.columns != 'CURRENT_IMPROVEMENT_VALUE_y']
+subset = subset.loc[:, subset.columns != 'REPORT_YEAR_x']
+subset = subset.loc[:, subset.columns != 'REPORT_YEAR_y']
+subset = subset.loc[:, subset.columns != 'STREET_NAME']
+subset = subset.loc[:, subset.columns != 'TAX_ASSESSMENT_YEAR']
+subset = subset.loc[:, subset.columns != 'PREVIOUS_IMPROVEMENT_VALUE']
+subset = subset.loc[:, subset.columns != 'PREVIOUS_LAND_VALUE']
 
-data_feature = subset.drop(['CURRENT_LAND_VALUE'], axis=1, inplace=False)
+# subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE_DELTA']
+subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_STRATA']
+subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_LAND']
+subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_OTHER']
+subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_One Family Dwelling']
+subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Multiple Family Dwelling']
+subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Two Family Dwelling']
+subset = subset.loc[:, subset.columns != 'REGION_South Cambie']
+subset = subset.loc[:, subset.columns != 'TAX_LEVY_x']
+subset = subset.loc[:, subset.columns != 'TAX_LEVY_y']
+subset = subset.loc[:, subset.columns != 'YEAR_BUILT']
+subset = subset.loc[:, subset.columns != 'BIG_IMPROVEMENT_YEAR']
+subset = subset.loc[:, subset.columns != ' Total - Age groups and average age of the population - 100% data ']
+
+
+# cols = [col for col in data.columns if col in ['CURRENT_LAND_VALUE_DELTA', 'REGION_Kitsilano','ZONE_CATEGORY_Comprehensive Development', 'REGION_Killarney', 'REGION_Dunbar-Southlands', 'ZONE_CATEGORY_Industrial', '   $50000 to $59999 '
+#     , 'REGION_Grandview-Woodland', 'ZONE_CATEGORY_Commercial', 'REGION_Oakridge', 'REGION_Riley', 'REGION_Kerrisdale', 'YEAR_BUILT', 'REGION_West Point Grey', 'ZONE_CATEGORY_Light Industrial', '   $20000 to $29999 '
+#     , 'REGION_Shaughnessy', 'BIG_IMPROVEMENT_YEAR', 'CURRENT_IMPROVEMENT_VALUE_DELTA']]
+# subset = data[cols]
+subset = subset.dropna(axis=0, how='any', inplace=False)
+
+print(subset)
+data_feature = subset.drop(['CURRENT_LAND_VALUE_DELTA'], axis=1, inplace=False)
 scaler = StandardScaler()
 
 #standardize data excluding target_D
@@ -71,16 +104,17 @@ test_features = standardize_data.iloc[test_indices, :]
 
 # create training label
 train_data_labels = subset.iloc[train_indices, :]
-train_labels = train_data_labels.loc[:,'CURRENT_LAND_VALUE']
+train_labels = train_data_labels.loc[:,'CURRENT_LAND_VALUE_DELTA']
 
 # create test labels
 test_data_labels = subset.iloc[test_indices, :]
-test_labels = test_data_labels.loc[:, 'CURRENT_LAND_VALUE']
+test_labels = test_data_labels.loc[:, 'CURRENT_LAND_VALUE_DELTA']
 
+print(train_labels)
 train_err = []
 cv_err = []
-lam = [10**-2, 10**-1.75, 10**-1.5, 10**-1.25, 10**-1, 10**-0.75, 10**-.5, 10**-.25, 10**0, 10**.25, 10**.5, 10**.75, 10**1, 10**1.25, 10**1.5, 10**1.75, 10**4]
-train_err_result, cv_err_result = lasso_kfoldCV(train_features, train_labels, 10**-1,  5)
+lam = [ 10**3.5, 10**4, 10**4.5, 10**5, 10**5.5, 10**6, 10**7, 10**8]
+# train_err_result, cv_err_result = lasso_kfoldCV(train_features, train_labels, 10**-1,  5)
 
 #find the average cv and training mae using lasso regression
 for l in list(lam):
@@ -91,15 +125,14 @@ for l in list(lam):
 plt.title("Lasso Regression of MAE and λ")
 plt.plot(np.log10(lam), train_err, '-b', label="training error")
 plt.plot(np.log10(lam), cv_err, '-g', label="cross validation error")
-# plt.plot(np.log10(lamda), mae_arr, '-r', label="mae from testing set")
-plt.xticks(range(-2,2))
+plt.xticks(range(3,8))
 plt.xlabel("log10(λ)")
 plt.ylabel("MAE")
 plt.xlim()
 plt.legend()
 plt.show()
 
-lasso = linear_model.Lasso(alpha=10**4)
+lasso = linear_model.Lasso(alpha=10**4.5)
 #fi5 using training features
 lasso.fit(train_features, train_labels)
 
@@ -107,11 +140,13 @@ lasso.fit(train_features, train_labels)
 ridge_pred = lasso.predict(test_features)
 
 #calculate mae using ridge regression
-mae = np.mean(np.absolute(np.subtract(ridge_pred, test_labels)))
-print('\nMean Absolute Error when lambda is 10^-.5 = ', mae)
+# mae = np.mean(np.absolute(np.subtract(ridge_pred, test_labels)))
+# print('\nMean Absolute Error when lambda is 10^-.5 = ', mae)
 
 #finding the top 3 features
 coef = dict(zip(train_features, lasso.coef_))
-coef = {x:y for x,y in coef.items() if y!=0}
-top_feature = sorted(coef, key=coef.get, reverse=True)[:10]
-print("\nTop 3 features: ", top_feature)
+# coef = {x:y for x,y in coef.items() if y!=0}
+top_feature = sorted(coef, key=lambda coef_key: abs(coef[coef_key]), reverse=True)[:10]
+print("\nTop 10 features: ", top_feature)
+print(sorted(lasso.coef_, reverse=True)[:10])
+print(coef)
