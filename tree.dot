@@ -1,0 +1,29 @@
+digraph Tree {
+node [shape=box, style="rounded", color="black", fontname=helvetica] ;
+edge [fontname=helvetica] ;
+0 [label="CURRENT_IMPROVEMENT_VALUE_DELTA <= -2047000.0\nmse = 15661844159402.0\nsamples = 81213\nvalue = 1082311.5"] ;
+1 [label="CURRENT_IMPROVEMENT_VALUE_DELTA <= -2053000.0\nmse = 1347327748916322.2\nsamples = 165\nvalue = 24805242.7"] ;
+0 -> 1 [labeldistance=2.5, labelangle=45, headlabel="True"] ;
+2 [label="CURRENT_IMPROVEMENT_VALUE_DELTA <= -73415000.0\nmse = 896296191269036.4\nsamples = 145\nvalue = 15582692.0"] ;
+1 -> 2 ;
+3 [label="mse = 13897001387755.2\nsamples = 5\nvalue = -34525571.4"] ;
+2 -> 3 ;
+4 [label="mse = 846664101490356.4\nsamples = 140\nvalue = 17044183.0"] ;
+2 -> 4 ;
+5 [label="mse = 0.0\nsamples = 20\nvalue = 86372000.0"] ;
+1 -> 5 ;
+6 [label="CURRENT_IMPROVEMENT_VALUE_DELTA <= 11949650.0\nmse = 11469444518089.4\nsamples = 81048\nvalue = 1029847.2"] ;
+0 -> 6 [labeldistance=2.5, labelangle=-45, headlabel="False"] ;
+7 [label="LEGAL_TYPE_STRATA <= 0.5\nmse = 9294009286999.7\nsamples = 80904\nvalue = 988394.2"] ;
+6 -> 7 ;
+8 [label="mse = 15554306376711.2\nsamples = 45663\nvalue = 1609953.1"] ;
+7 -> 8 ;
+9 [label="mse = 79987314916.2\nsamples = 35241\nvalue = 186830.1"] ;
+7 -> 9 ;
+10 [label="CURRENT_IMPROVEMENT_VALUE_DELTA <= 148475352.0\nmse = 689819549522778.9\nsamples = 144\nvalue = 24234108.7"] ;
+6 -> 10 ;
+11 [label="mse = 522372827822087.4\nsamples = 135\nvalue = 21086256.5"] ;
+10 -> 11 ;
+12 [label="mse = 571789457390533.0\nsamples = 9\nvalue = 76536884.6"] ;
+10 -> 12 ;
+}
