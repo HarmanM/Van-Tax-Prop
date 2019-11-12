@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
 
-data = pd.read_csv("new_output.csv")
+data = pd.read_csv("data")
 subset = data.loc[:, data.columns != 'STREET_NAME']
 subset = subset.loc[:,  subset.columns != 'PROPERTY_POSTAL_CODE']
 subset = subset.loc[:, subset.columns != 'Unnamed: 0']
