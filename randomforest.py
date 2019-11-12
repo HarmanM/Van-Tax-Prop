@@ -88,8 +88,18 @@ train_ratio = 0.75
 num_rows = subset.shape[0]
 train_set_size = int(train_ratio * num_rows)
 
+subset = subset.loc[:, ['CURRENT_IMPROVEMENT_VALUE_DELTA', 'LEGAL_TYPE_STRATA',
+                           'LEGAL_TYPE_LAND', 'LEGAL_TYPE_OTHER', 'ZONE_CATEGORY_Commercial',
+                           'ZONE_CATEGORY_One Family Dwelling', 'ZONE_CATEGORY_Light Industrial',
+                           'ZONE_CATEGORY_Comprehensive Development', 'REGION_Shaughnessy',
+                           'REGION_Grandview-Woodland', '  $10000 to $19999', 'REGION_Sunset',
+                           'ZONE_CATEGORY_Two Family Dwelling', '  $20000 to $29999', 'REGION_West Point Grey',
+                        'CURRENT_LAND_VALUE_DELTA']]
+
+
 data_in = subset.drop('CURRENT_LAND_VALUE_DELTA', axis=1, inplace=False)
 data_out = subset.loc[:, 'CURRENT_LAND_VALUE_DELTA']
+
 
 training_data_in = data_in[:train_set_size]
 training_data_out = data_out[:train_set_size]
