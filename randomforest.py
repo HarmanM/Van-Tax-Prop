@@ -9,6 +9,55 @@ from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
 
 
+def forest_kfoldCV(x, y, K, n):
+    # really basic parameters, didnt specify max or max leaf nodes, chose 1000 for n_estimators but the default is 10, got mae of 433k
+    rf = RandomForestRegressor(n_estimators=100, random_state=42, max_features=n)
+    subset_in = np.array_split(x, K)
+    subset_out = np.array_split(y, K)
+    cut_off_x = len(subset_in[K - 1])
+    cut_off_y = len(subset_out[K - 1])
+    t_mae = []
+    c_mae = []
+    for i in range(len(subset_in)):
+        subset_in[i] = subset_in[i][0:cut_off_x]
+    for i in range(len(subset_out)):
+        subset_out[i] = subset_out[i][0:cut_off_y]
+    for i in range(K):
+        validation_setin = np.array(subset_in[i])
+        validation_setout = np.array(subset_out[i])
+        if (i == 0):
+            training_setin = np.concatenate(subset_in[1:])
+            training_setout = np.concatenate(subset_out[1:])
+        elif (i == K - 1):
+            training_setin = np.concatenate(subset_in[0:i])
+            training_setout= np.concatenate(subset_out[0:i])
+        else:
+            training_setin = np.concatenate(subset_in[0:i] + subset_in[i + 1:])
+            training_setout = np.concatenate(subset_out[0:i] + subset_out[i + 1:])
+
+        rf.fit(training_setin, training_setout)
+
+        y_pred_val = rf.predict(validation_setin)
+        y_pred_train = rf.predict(training_setin)
+
+        lst = []
+        for n in range(len(y_pred_val)):
+            tmp = abs(validation_setout[n] - y_pred_val[n])
+            lst.append(tmp)
+        c_mae.append(np.mean(lst))
+        print("cv", np.mean(lst))
+        lst = []
+        for i in range(len(y_pred_train)):
+            tmp = abs(training_setout[i] - y_pred_train[i])
+            lst.append(tmp)
+        t_mae.append(np.mean(lst))
+
+        print("training", np.mean(lst))
+
+    train_error = np.mean(t_mae)
+    cv_error = np.mean(c_mae)
+    return cv_error, train_error
+
 data = pd.read_csv("preprocessed_complete_2006_2016.csv")
 subset = data.loc[:, data.columns != 'STREET_NAME']
 subset = subset.loc[:,  subset.columns != 'PROPERTY_POSTAL_CODE']
@@ -33,35 +82,6 @@ subset = subset.loc[:, subset.columns != ' Total - Age groups and average age of
 subset = subset.loc[:, subset.columns != ' Total population 15 years and over by presence of children and labour force activity ']
 subset = subset.loc[:, subset.columns != 'family income']
 subset = subset.loc[:, subset.columns != 'total martial status']
-subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_STRATA']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Multiple Family Dwelling']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Two Family Dwelling']
-subset = subset.loc[:, subset.columns != '  0 to 4 years']
-subset = subset.loc[:, subset.columns != '  5 to 9 years']
-subset = subset.loc[:, subset.columns != '  10 to 14 years']
-subset = subset.loc[:, subset.columns != '  15 to 19 years']
-subset = subset.loc[:, subset.columns != '  70 to 74 years']
-subset = subset.loc[:, subset.columns != '  75 to 79 years']
-subset = subset.loc[:, subset.columns != '  80 to 84 years']
-subset = subset.loc[:, subset.columns != '  85 to 89 years']
-subset = subset.loc[:, subset.columns != '  90 to 94 years']
-subset = subset.loc[:, subset.columns != '  90 to 94 years']
-subset = subset.loc[:, subset.columns != '  95 to 99 years']
-subset = subset.loc[:, subset.columns != '  60 to 65 years']
-subset = subset.loc[:, subset.columns != '  45 to 49 years']
-subset = subset.loc[:, subset.columns != '  65 to 69 years']
-subset = subset.loc[:, subset.columns != '  60 to 64 years']
-subset = subset.loc[:, subset.columns != '  40 to 44 years']
-subset = subset.loc[:, subset.columns != '  100 years and over']
-subset = subset.loc[:, subset.columns != '    Married']
-subset = subset.loc[:, subset.columns != '    Living common law']
-subset = subset.loc[:, subset.columns != '    Never married']
-subset = subset.loc[:, subset.columns != '   Divorced ']
-subset = subset.loc[:, subset.columns != '$100000 and over']
-subset = subset.loc[:, subset.columns != 'median income']
-subset = subset.loc[:, subset.columns != 'REGION_West Point Grey']
-subset = subset.loc[:, subset.columns != 'REGION_Kerrisdale']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Two Family Dwelling']
 subset = subset.dropna(axis=0, how='any', inplace=False)
 
 train_ratio = 0.75
@@ -78,14 +98,19 @@ test_data_in = data_in[train_set_size:]
 test_data_out = data_out[train_set_size:]
 
 # really basic parameters, didnt specify max or max leaf nodes, chose 1000 for n_estimators but the default is 10, got mae of 433k
-rf = RandomForestRegressor(n_estimators = 1000, random_state = 42)
-rf.fit(training_data_in, training_data_out)
-price_pred =rf.predict(test_data_in)
 
-lst = []
-for i in range(len(price_pred)):
-    tmp = abs(test_data_out.values[i] - price_pred[i])
-    lst.append(tmp)
-mae = np.mean(lst)
+pt3_train_arr = []
+pt3_valid_arr = []
+for i in range(16):
+    kfold_result = forest_kfoldCV(training_data_in, training_data_out, 5, i + 1)
+    pt3_train_arr.append(kfold_result[1])
+    pt3_valid_arr.append(kfold_result[0])
+    print(i, "training: ", kfold_result[1], "cv: ", kfold_result[0])
 
-print('Mean Absolute Error = ', mae)
+plt.plot(range(1, 16), pt3_train_arr)
+plt.plot(range(1, 16), pt3_valid_arr)
+plt.suptitle("Learning curve plot for num_features vs. mae")
+plt.xlabel("num_features = ")
+plt.ylabel("Error")
+plt.legend(['y = train_error', 'y = cv_error'], loc='upper left')
+plt.show()
