@@ -66,7 +66,7 @@ subset = subset.loc[:, subset.columns != 'STREET_NAME']
 subset = subset.loc[:, subset.columns != 'TAX_ASSESSMENT_YEAR']
 subset = subset.loc[:, subset.columns != 'PREVIOUS_IMPROVEMENT_VALUE']
 subset = subset.loc[:, subset.columns != 'PREVIOUS_LAND_VALUE']
-# subset = subset.loc[:, subset.columns != 'CURRENT_LAND_VALUE_DELTA']
+# subset = subset.loc[:, subset.columns != 'CURRENT_IMPROVEMENT_VALUE_DELTA']
 subset = subset.loc[:, subset.columns != 'TAX_LEVY_x']
 subset = subset.loc[:, subset.columns != 'TAX_LEVY_y']
 subset = subset.loc[:, subset.columns != 'YEAR_BUILT']
@@ -81,8 +81,11 @@ train_ratio = 0.75
 num_rows = subset.shape[0]
 train_set_size = int(train_ratio * num_rows)
 
-data_in = subset.drop('CURRENT_IMPROVEMENT_VALUE_DELTA', axis=1, inplace=False)
-data_out = subset.loc[:, 'CURRENT_IMPROVEMENT_VALUE_DELTA']
+data_in = subset.drop('CURRENT_LAND_VALUE_DELTA', axis=1, inplace=False)
+data_out = subset.loc[:, 'CURRENT_LAND_VALUE_DELTA']
+
+
+
 
 training_data_in = data_in[:train_set_size]
 training_data_out = data_out[:train_set_size]
@@ -101,18 +104,10 @@ alpha_plot = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 c_mae_array = []
 t_mae_array = []
 for i in range(len(alpha)):
-    mae_vals = ridge_kfoldCV(ridge_train, training_data_out, 5, alpha[i])
+    mae_vals = ridge_kfoldCV(ridge_train, training_data_out, 4, alpha[i])
     c_mae_array.append(mae_vals[0])
     t_mae_array.append(mae_vals[1])
 
-    chosenLamb = Ridge(alpha=alpha[i])
-    chosenLamb.fit(ridge_train, training_data_out)
-    coeffs = chosenLamb.coef_
-    index = np.argpartition(np.abs(coeffs), -5)[-5:]
-    print("\nTop five features for Ridge\n: ")
-    for i in index:
-        print(subset.columns[i])
-        print(coeffs[i])
 
 plt.plot(alpha_plot, c_mae_array)
 plt.plot(alpha_plot, t_mae_array)
@@ -122,3 +117,11 @@ plt.ylabel("Errors")
 plt.legend(['y = cv_error', 'y = train_error'], loc='upper left')
 plt.show()
 
+chosenLamb = Ridge(alpha=10**4.5)
+chosenLamb.fit(ridge_train, training_data_out)
+coeffs = chosenLamb.coef_
+index = np.argpartition(np.abs(coeffs), -10)[-10:]
+print("\nTop ten features for Ridge\n: ")
+for i in index:
+    print(data_in.columns[i])
+    print(coeffs[i])
