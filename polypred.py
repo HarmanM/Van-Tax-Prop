@@ -7,6 +7,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
+import random
 
 def poly_kfoldCV(x, y, K, p):
     subset_in = np.array_split(x, K)
@@ -84,51 +85,33 @@ subset = subset.loc[:, subset.columns != ' Total - Age groups and average age of
 subset = subset.loc[:, subset.columns != ' Total population 15 years and over by presence of children and labour force activity ']
 subset = subset.loc[:, subset.columns != 'family income']
 subset = subset.loc[:, subset.columns != 'total martial status']
-subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_STRATA']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Multiple Family Dwelling']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Two Family Dwelling']
-subset = subset.loc[:, subset.columns != '  0 to 4 years']
-subset = subset.loc[:, subset.columns != '  5 to 9 years']
-subset = subset.loc[:, subset.columns != '  10 to 14 years']
-subset = subset.loc[:, subset.columns != '  15 to 19 years']
-subset = subset.loc[:, subset.columns != '  70 to 74 years']
-subset = subset.loc[:, subset.columns != '  75 to 79 years']
-subset = subset.loc[:, subset.columns != '  80 to 84 years']
-subset = subset.loc[:, subset.columns != '  85 to 89 years']
-subset = subset.loc[:, subset.columns != '  90 to 94 years']
-subset = subset.loc[:, subset.columns != '  90 to 94 years']
-subset = subset.loc[:, subset.columns != '  95 to 99 years']
-subset = subset.loc[:, subset.columns != '  60 to 65 years']
-subset = subset.loc[:, subset.columns != '  45 to 49 years']
-subset = subset.loc[:, subset.columns != '  65 to 69 years']
-subset = subset.loc[:, subset.columns != '  60 to 64 years']
-subset = subset.loc[:, subset.columns != '  40 to 44 years']
-subset = subset.loc[:, subset.columns != '  100 years and over']
-subset = subset.loc[:, subset.columns != '    Married']
-subset = subset.loc[:, subset.columns != '    Living common law']
-subset = subset.loc[:, subset.columns != '    Never married']
-subset = subset.loc[:, subset.columns != '   Divorced ']
-subset = subset.loc[:, subset.columns != '$100000 and over']
-subset = subset.loc[:, subset.columns != 'median income']
-subset = subset.loc[:, subset.columns != 'REGION_West Point Grey']
-subset = subset.loc[:, subset.columns != 'REGION_Kerrisdale']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Two Family Dwelling']
 subset = subset.dropna(axis=0, how='any', inplace=False)
+
+subset = subset.loc[:, ['REGION_Grandview-Woodland', 'REGION_Shaughnessy', 'ZONE_CATEGORY_Comprehensive Development',
+                          'ZONE_CATEGORY_Light Industrial', 'ZONE_CATEGORY_One Family Dwelling',
+                          'ZONE_CATEGORY_Commercial', 'LEGAL_TYPE_OTHER', 'LEGAL_TYPE_LAND', 'LEGAL_TYPE_STRATA',
+                          'CURRENT_IMPROVEMENT_VALUE_DELTA', '   $10000 to $19999 ', 'REGION_Sunset',
+                          'ZONE_CATEGORY_Two Family Dwelling', '   $20000 to $29999 ', 'REGION_West Point Grey',
+                        'CURRENT_LAND_VALUE_DELTA']]
 
 train_ratio = 0.75
 num_rows = subset.shape[0]
 train_set_size = int(train_ratio * num_rows)
 
-data_in = subset.drop('CURRENT_LAND_VALUE_DELTA', axis=1, inplace=False)
-data_out = subset.loc[:, 'CURRENT_LAND_VALUE_DELTA']
+shuffled_indices = list(range(num_rows))
+random.seed(42)
 
-training_data_in = data_in[:train_set_size]
-training_data_out = data_out[:train_set_size]
+train_indices = shuffled_indices[:train_set_size]
+test_indices = shuffled_indices[train_set_size:]
 
-training_data_in = StandardScaler(with_mean=True, with_std=True).fit_transform(training_data_in)
+train_data = subset.iloc[train_indices, :]
+test_data = subset.iloc[test_indices, :]
 
-test_data_in = data_in[train_set_size:]
-test_data_out = data_out[train_set_size:]
+training_data_in = train_data.drop('CURRENT_LAND_VALUE_DELTA', axis=1, inplace=False)
+training_data_out = train_data.loc[:, 'CURRENT_LAND_VALUE_DELTA']
+
+test_data_in = test_data.drop('CURRENT_LAND_VALUE_DELTA', axis=1, inplace=False)
+test_data_out = test_data.loc[:, 'CURRENT_LAND_VALUE_DELTA']
 
 
 pt3_train_arr = []
@@ -142,8 +125,9 @@ for i in range(16):
 
 plt.plot(range(2, 16), pt3_train_arr)
 plt.plot(range(2, 16), pt3_valid_arr)
-plt.suptitle("Learning curve plot for p vs. mae")
+plt.suptitle("Learning curve plot for K vs. mae")
 plt.xlabel("K = ")
 plt.ylabel("Error")
 plt.legend(['y = train_error', 'y = cv_error'], loc='upper left')
 plt.show()
+
