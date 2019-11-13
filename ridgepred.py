@@ -75,35 +75,6 @@ subset = subset.loc[:, subset.columns != ' Total - Age groups and average age of
 subset = subset.loc[:, subset.columns != ' Total population 15 years and over by presence of children and labour force activity ']
 subset = subset.loc[:, subset.columns != 'family income']
 subset = subset.loc[:, subset.columns != 'total martial status']
-subset = subset.loc[:, subset.columns != 'LEGAL_TYPE_STRATA']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Multiple Family Dwelling']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Two Family Dwelling']
-subset = subset.loc[:, subset.columns != '  0 to 4 years']
-subset = subset.loc[:, subset.columns != '  5 to 9 years']
-subset = subset.loc[:, subset.columns != '  10 to 14 years']
-subset = subset.loc[:, subset.columns != '  15 to 19 years']
-subset = subset.loc[:, subset.columns != '  70 to 74 years']
-subset = subset.loc[:, subset.columns != '  75 to 79 years']
-subset = subset.loc[:, subset.columns != '  80 to 84 years']
-subset = subset.loc[:, subset.columns != '  85 to 89 years']
-subset = subset.loc[:, subset.columns != '  90 to 94 years']
-subset = subset.loc[:, subset.columns != '  90 to 94 years']
-subset = subset.loc[:, subset.columns != '  95 to 99 years']
-subset = subset.loc[:, subset.columns != '  60 to 65 years']
-subset = subset.loc[:, subset.columns != '  45 to 49 years']
-subset = subset.loc[:, subset.columns != '  65 to 69 years']
-subset = subset.loc[:, subset.columns != '  60 to 64 years']
-subset = subset.loc[:, subset.columns != '  40 to 44 years']
-subset = subset.loc[:, subset.columns != '  100 years and over']
-subset = subset.loc[:, subset.columns != '    Married']
-subset = subset.loc[:, subset.columns != '    Living common law']
-subset = subset.loc[:, subset.columns != '    Never married']
-subset = subset.loc[:, subset.columns != '   Divorced ']
-subset = subset.loc[:, subset.columns != '$100000 and over']
-subset = subset.loc[:, subset.columns != 'median income']
-subset = subset.loc[:, subset.columns != 'REGION_West Point Grey']
-subset = subset.loc[:, subset.columns != 'REGION_Kerrisdale']
-subset = subset.loc[:, subset.columns != 'ZONE_CATEGORY_Two Family Dwelling']
 subset = subset.dropna(axis=0, how='any', inplace=False)
 
 train_ratio = 0.75
@@ -112,9 +83,6 @@ train_set_size = int(train_ratio * num_rows)
 
 data_in = subset.drop('CURRENT_LAND_VALUE_DELTA', axis=1, inplace=False)
 data_out = subset.loc[:, 'CURRENT_LAND_VALUE_DELTA']
-
-
-
 
 training_data_in = data_in[:train_set_size]
 training_data_out = data_out[:train_set_size]
@@ -133,7 +101,7 @@ alpha_plot = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 c_mae_array = []
 t_mae_array = []
 for i in range(len(alpha)):
-    mae_vals = ridge_kfoldCV(ridge_train, training_data_out, 8, alpha[i])
+    mae_vals = ridge_kfoldCV(ridge_train, training_data_out, 3, alpha[i])
     c_mae_array.append(mae_vals[0])
     t_mae_array.append(mae_vals[1])
 
@@ -146,11 +114,13 @@ plt.ylabel("Errors")
 plt.legend(['y = cv_error', 'y = train_error'], loc='upper left')
 plt.show()
 
-chosenLamb = Ridge(alpha=10**4)
+chosenLamb = Ridge(alpha=10**5)
 chosenLamb.fit(ridge_train, training_data_out)
 coeffs = chosenLamb.coef_
-index = np.argpartition(np.abs(coeffs), -30)[-30:]
-print("\nTop twenty features for Ridge\n: ")
+index = np.argpartition(np.abs(coeffs), -20)[-20:]
+print("\nTop ten features for Ridge\n: ")
 for i in index:
     print(data_in.columns[i])
     print(coeffs[i])
+
+print(training_data_in.columns)
