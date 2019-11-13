@@ -9,13 +9,14 @@ from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
 from sklearn.tree import export_graphviz
 import pydot
+from sklearn.metrics import r2_score
 
 
 
 
 def forest_kfoldCV(x, y, K, n):
     # really basic parameters, didnt specify max or max leaf nodes, chose 1000 for n_estimators but the default is 10, got mae of 433k
-    rf = RandomForestRegressor(n_estimators=20, random_state=42, max_depth=n)
+    rf = RandomForestRegressor(n_estimators=20, random_state=42, max_depth=12, min_samples_split=n)
     subset_in = np.array_split(x, K)
     subset_out = np.array_split(y, K)
     cut_off_x = len(subset_in[K - 1])
@@ -113,9 +114,8 @@ test_data_out = data_out[train_set_size:]
 # really basic parameters, didnt specify max or max leaf nodes, chose 1000 for n_estimators but the default is 10, got mae of 433k
 
 
-
 # Pull out one tree from the forest
-rf = RandomForestRegressor(n_estimators=10, random_state=42, max_depth=5)
+rf = RandomForestRegressor(n_estimators=10, random_state=42, max_depth=4)
 rf.fit(training_data_in, training_data_out)
 tree = rf.estimators_[5]
 # Export the image to a dot file
@@ -123,19 +123,40 @@ tree = rf.estimators_[5]
 export_graphviz(tree, out_file = 'small_tree.dot', feature_names = list(training_data_in.columns), rounded = True, precision = 1)
 (graph, ) = pydot.graph_from_dot_file('small_tree.dot')
 graph.write_png('small_tree.png');
+#
+# pt3_train_arr = []
+# pt3_valid_arr = []
+# for i in range(10):
+#     kfold_result = forest_kfoldCV(training_data_in, training_data_out, 5, (i + 2))
+#     pt3_train_arr.append(kfold_result[1])
+#     pt3_valid_arr.append(kfold_result[0])
+#     print(i, "training: ", kfold_result[1], "cv: ", kfold_result[0])
+#
+# plt.plot(range(2, 12), pt3_train_arr)
+# plt.plot(range(2, 12), pt3_valid_arr)
+# plt.suptitle("Min samples to split vs. mae")
+# plt.xlabel("Min samples to split ")
+# plt.ylabel("Error")
+# plt.legend(['y = train_error', 'y = cv_error'], loc='upper left')
+# plt.show()
 
-pt3_train_arr = []
-pt3_valid_arr = []
-for i in range(10):
-    kfold_result = forest_kfoldCV(training_data_in, training_data_out, 5, (i + 1) * 4)
-    pt3_train_arr.append(kfold_result[1])
-    pt3_valid_arr.append(kfold_result[0])
-    print(i, "training: ", kfold_result[1], "cv: ", kfold_result[0])
+rf2 = RandomForestRegressor(n_estimators=20, random_state=42, max_depth=12, min_samples_split=2)
+rf2.fit(training_data_in, training_data_out)
+y_pred_val = rf2.predict(test_data_in)
 
-plt.plot(range(1, 11), pt3_train_arr)
-plt.plot(range(1, 11), pt3_valid_arr)
-plt.suptitle("Learning curve plot for num_features vs. mae")
-plt.xlabel("num_features = ")
-plt.ylabel("Error")
-plt.legend(['y = train_error', 'y = cv_error'], loc='upper left')
-plt.show()
+#print(y_pred_val[0])
+#print(list(test_data_out)[0])
+
+lst = []
+for n in range(len(y_pred_val)):
+    tmp = abs(list(test_data_out)[n] - y_pred_val[n])
+    lst.append(tmp)
+mae = np.mean(lst)
+
+# print("Computed mae: ", mae)
+# mape = 100 * (mae / list(test_data_in))
+# accuracy = 100 - np.mean(mape)
+# print('Accuracy:', round(accuracy, 2), '%.')
+
+r2 = r2_score(list(test_data_out), y_pred_val)
+print(r2)
