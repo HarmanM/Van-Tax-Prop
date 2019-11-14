@@ -93,14 +93,6 @@ train_ratio = 0.75
 num_rows = subset.shape[0]
 train_set_size = int(train_ratio * num_rows)
 
-subset = subset.loc[:, ['CURRENT_IMPROVEMENT_VALUE_DELTA', 'LEGAL_TYPE_STRATA',
-                           'LEGAL_TYPE_LAND', 'LEGAL_TYPE_OTHER', 'ZONE_CATEGORY_Commercial',
-                           'ZONE_CATEGORY_One Family Dwelling', 'ZONE_CATEGORY_Light Industrial',
-                           'ZONE_CATEGORY_Comprehensive Development', 'REGION_Shaughnessy',
-                           'REGION_Grandview-Woodland', '   $10000 to $19999 ', 'REGION_Sunset',
-                           'ZONE_CATEGORY_Two Family Dwelling', '   $20000 to $29999 ', 'REGION_West Point Grey',
-                        'CURRENT_LAND_VALUE_DELTA']]
-
 data_in = subset.drop('CURRENT_LAND_VALUE_DELTA', axis=1, inplace=False)
 data_out = subset.loc[:, 'CURRENT_LAND_VALUE_DELTA']
 
@@ -109,6 +101,21 @@ training_data_out = data_out[:train_set_size]
 
 test_data_in = data_in[train_set_size:]
 test_data_out = data_out[train_set_size:]
+temp_test_out = test_data_out
+
+training_data_in = training_data_in.loc[:, ['CURRENT_IMPROVEMENT_VALUE_DELTA', 'LEGAL_TYPE_STRATA',
+                           'LEGAL_TYPE_LAND', 'LEGAL_TYPE_OTHER', 'ZONE_CATEGORY_Commercial',
+                           'ZONE_CATEGORY_One Family Dwelling', 'ZONE_CATEGORY_Light Industrial',
+                           'ZONE_CATEGORY_Comprehensive Development', 'REGION_Shaughnessy',
+                           'REGION_Grandview-Woodland', '   $10000 to $19999 ', 'REGION_Sunset',
+                           'ZONE_CATEGORY_Two Family Dwelling', '   $20000 to $29999 ', 'REGION_West Point Grey']]
+
+test_data_in = test_data_in.loc[:, ['CURRENT_IMPROVEMENT_VALUE_DELTA', 'LEGAL_TYPE_STRATA',
+                           'LEGAL_TYPE_LAND', 'LEGAL_TYPE_OTHER', 'ZONE_CATEGORY_Commercial',
+                           'ZONE_CATEGORY_One Family Dwelling', 'ZONE_CATEGORY_Light Industrial',
+                           'ZONE_CATEGORY_Comprehensive Development', 'REGION_Shaughnessy',
+                           'REGION_Grandview-Woodland', '   $10000 to $19999 ', 'REGION_Sunset',
+                           'ZONE_CATEGORY_Two Family Dwelling', '   $20000 to $29999 ', 'REGION_West Point Grey']]
 
 
 #pt3_train_arr = []
@@ -126,6 +133,8 @@ test_data_out = data_out[train_set_size:]
 #plt.ylabel("Error")
 #plt.legend(['y = train_error', 'y = cv_error'], loc='upper left')
 #plt.show()
+
+#print(training_data_in.head(20).to_string())
 
 rf2 = RandomForestRegressor(n_estimators=20, random_state=42, max_depth=12, min_samples_split=2)
 rf2.fit(training_data_in, training_data_out)
@@ -149,8 +158,10 @@ r2 = r2_score(list(test_data_out), y_pred_val)
 print(r2)
 
 export = pd.DataFrame(columns=['Predicted', 'Actual', 'Difference'])
-export['Predicted'] = y_pred_val[0:5]   
+export['Predicted'] = y_pred_val[0:5]
 export['Actual'] = test_data_out.values[0:5]
 export['Difference'] = np.subtract(y_pred_val[0:5], test_data_out.values[0:5])
-export.to_csv('random_first.csv')
+export['Pcoord'] = np.array(temp_test_out['PCOORD'][0:5])
+export['Geom'] = np.array(temp_test_out['Geom'][0:5])
+export.to_csv('random_forest.csv')
 print(export)
