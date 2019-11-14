@@ -104,11 +104,6 @@ arr = ['CURRENT_IMPROVEMENT_VALUE_DELTA', 'LEGAL_TYPE_STRATA', 'LEGAL_TYPE_LAND'
        'REGION_Shaughnessy', 'REGION_Grandview-Woodland', '   $10000 to $19999 ', 'REGION_Sunset', 'ZONE_CATEGORY_Two Family Dwelling',
        '   $20000 to $29999 ', 'REGION_West Point Grey']
 
-subset = subset.loc[:, ['CURRENT_IMPROVEMENT_VALUE_DELTA', 'LEGAL_TYPE_STRATA', 'LEGAL_TYPE_LAND', 'LEGAL_TYPE_OTHER',
-           'ZONE_CATEGORY_Commercial',
-           'ZONE_CATEGORY_One Family Dwelling', 'ZONE_CATEGORY_Light Industrial',
-           'ZONE_CATEGORY_Comprehensive Development', 'CURRENT_LAND_VALUE_DELTA']]
-
 train_ratio = 0.75
 num_rows = subset.shape[0]
 train_set_size = int(train_ratio * num_rows)
@@ -122,10 +117,20 @@ test_indices = shuffled_indices[train_set_size:]
 train_data = subset.iloc[train_indices, :]
 test_data = subset.iloc[test_indices, :]
 
-training_data_in = train_data.drop('CURRENT_LAND_VALUE_DELTA', axis=1, inplace=False)
+training_data_in = train_data.loc[:, ['CURRENT_IMPROVEMENT_VALUE_DELTA', 'LEGAL_TYPE_STRATA', 'LEGAL_TYPE_LAND', 'LEGAL_TYPE_OTHER',
+           'ZONE_CATEGORY_Commercial',
+           'ZONE_CATEGORY_One Family Dwelling', 'ZONE_CATEGORY_Light Industrial',
+           'ZONE_CATEGORY_Comprehensive Development', 'CURRENT_LAND_VALUE_DELTA']]
+
+test_data_in = test_data.loc[:, ['CURRENT_IMPROVEMENT_VALUE_DELTA', 'LEGAL_TYPE_STRATA', 'LEGAL_TYPE_LAND', 'LEGAL_TYPE_OTHER',
+           'ZONE_CATEGORY_Commercial',
+           'ZONE_CATEGORY_One Family Dwelling', 'ZONE_CATEGORY_Light Industrial',
+           'ZONE_CATEGORY_Comprehensive Development', 'CURRENT_LAND_VALUE_DELTA']]
+
+training_data_in = training_data_in.drop('CURRENT_LAND_VALUE_DELTA', axis=1, inplace=False)
 training_data_out = train_data.loc[:, 'CURRENT_LAND_VALUE_DELTA']
 
-test_data_in = test_data.drop('CURRENT_LAND_VALUE_DELTA', axis=1, inplace=False)
+test_data_in = test_data_in.drop('CURRENT_LAND_VALUE_DELTA', axis=1, inplace=False)
 test_data_out = test_data.loc[:, 'CURRENT_LAND_VALUE_DELTA']
 
 
@@ -167,12 +172,13 @@ print('Mean Absolute Error = ', mae)
 r2 = r2_score(list(test_data_out), price_pred)
 print("r2 score: ", r2)
 
-print(test_data.head(20).to_string())
+print(np.array(test_data['PCOORD'][0:5]))
 
 export = pd.DataFrame(columns=['Predicted', 'Actual', 'Difference'])
 export['Predicted'] = price_pred[0:5]
 export['Actual'] = test_data_out.values[0:5]
 export['Difference'] = np.subtract(price_pred[0:5], test_data_out.values[0:5])
-export['Pcoord'] = test_data['PCOORD'][0:5]
+export['Pcoord'] = np.array(test_data['PCOORD'][0:5])
+export['Geom'] = np.array(test_data['Geom'][0:5])
 export.to_csv('linear_regression.csv')
 print(export)
