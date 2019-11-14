@@ -63,7 +63,7 @@ def forest_kfoldCV(x, y, K, n):
     cv_error = np.mean(c_mae)
     return cv_error, train_error
 
-data = pd.read_csv("preprocessed_complete_2006_2016.csv")
+data = pd.read_csv("demo.csv")
 subset = data.loc[:, data.columns != 'STREET_NAME']
 subset = subset.loc[:,  subset.columns != 'PROPERTY_POSTAL_CODE']
 subset = subset.loc[:, subset.columns != 'Unnamed: 0']
@@ -101,7 +101,7 @@ training_data_out = data_out[:train_set_size]
 
 test_data_in = data_in[train_set_size:]
 test_data_out = data_out[train_set_size:]
-temp_test_out = test_data_out
+temp_test_in = test_data_in
 
 training_data_in = training_data_in.loc[:, ['CURRENT_IMPROVEMENT_VALUE_DELTA', 'LEGAL_TYPE_STRATA',
                            'LEGAL_TYPE_LAND', 'LEGAL_TYPE_OTHER', 'ZONE_CATEGORY_Commercial',
@@ -157,11 +157,13 @@ mae = np.mean(lst)
 r2 = r2_score(list(test_data_out), y_pred_val)
 print(r2)
 
+print(temp_test_in.head(20).to_string())
+
 export = pd.DataFrame(columns=['Predicted', 'Actual', 'Difference'])
 export['Predicted'] = y_pred_val[0:5]
 export['Actual'] = test_data_out.values[0:5]
 export['Difference'] = np.subtract(y_pred_val[0:5], test_data_out.values[0:5])
-export['Pcoord'] = np.array(temp_test_out['PCOORD'][0:5])
-export['Geom'] = np.array(temp_test_out['Geom'][0:5])
+export['Pcoord'] = np.array(temp_test_in['PCOORD'][0:5])
+export['Geom'] = np.array(temp_test_in['Geom'][0:5])
 export.to_csv('random_forest.csv')
 print(export)
